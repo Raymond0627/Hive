@@ -1,7 +1,14 @@
 import { create } from 'zustand'
-import type { AgentPreview, Task } from '@hive/shared'
+import type { AgentActivity, AgentPreview, ServerMessage, Task } from '@hive/shared'
 
 type BackendStatus = 'connecting' | 'online' | 'offline'
+
+export interface LiveAgent {
+  x: number
+  y: number
+  activity: AgentActivity
+  mood: string
+}
 
 interface TaskResponse {
   task: Task
@@ -14,6 +21,13 @@ interface StudioState {
   backend: BackendStatus
   loading: boolean
 
+  /** Live simulation state, keyed by agent id. */
+  live: Record<string, LiveAgent>
+  socket: BackendStatus
+  /** Agent currently being dragged, if any. */
+  draggingId: string | null
+  setDragging: (id: string | null) => void
+
   /** Agent id with a Gemini call in flight, if any. */
   sendingTaskFor: string | null
   /** Last task error, shown in the panel until the next attempt. */
@@ -25,6 +39,8 @@ interface StudioState {
   /** Step 9: ask the server to run a task. Returns true on success. */
   sendTask: (agentId: string, prompt: string) => Promise<boolean>
   clearTaskError: () => void
+  setSocket: (status: BackendStatus) => void
+  applyServerMessage: (message: ServerMessage) => void
 }
 
 export const useStudioStore = create<StudioState>((set, get) => ({
@@ -34,6 +50,9 @@ export const useStudioStore = create<StudioState>((set, get) => ({
   loading: false,
   sendingTaskFor: null,
   taskError: null,
+  live: {},
+  socket: 'connecting',
+  draggingId: null,
 
   loadAgents: async () => {
     if (get().loading) return
@@ -92,4 +111,60 @@ export const useStudioStore = create<StudioState>((set, get) => ({
   },
 
   clearTaskError: () => set({ taskError: null }),
+
+  setSocket: (status) => set({ socket: status }),
+
+  setDragging: (id) => set({ draggingId: id }),
+
+  applyServerMessage: (message) => {
+    if (message.type === 'world_snapshot') {
+      const live: Record<string, LiveAgent> = {}
+      for (const agent of message.agents) {
+        live[agent.id] = {
+          x: agent.x,
+          y: agent.y,
+          activity: agent.activity,
+          mood: agent.mood,
+        }
+      }
+      set((state) => ({
+        live,
+        agents: state.agents.map((agent) => {
+          const current = live[agent.id]
+          return current
+            ? { ...agent, activity: current.activity, mood: current.mood }
+            : agent
+        }),
+      }))
+      return
+    }
+
+    if (message.type === 'agent_update') {
+      set((state) => {
+        const changed = state.agents.some(
+          (agent) =>
+            agent.id === message.agentId &&
+            (agent.activity !== message.activity || agent.mood !== message.mood),
+        )
+        return {
+          live: {
+            ...state.live,
+            [message.agentId]: {
+              x: message.x,
+              y: message.y,
+              activity: message.activity,
+              mood: message.mood,
+            },
+          },
+          agents: changed
+            ? state.agents.map((agent) =>
+                agent.id === message.agentId
+                  ? { ...agent, activity: message.activity, mood: message.mood }
+                  : agent,
+              )
+            : state.agents,
+        }
+      })
+    }
+  },
 }))

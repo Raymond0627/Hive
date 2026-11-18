@@ -1,17 +1,13 @@
-# deps
-node_modules/
-.pnp
-.pnp.js
-
 # builds
 dist/
 build/
 *.tsbuildinfo
 
-# env — never commit real keys
+# node_modules
+node_modules/
+
+# env
 .env
-.env.local
-.env.*.local
 !.env.example
 
 # data (SQLite lands here in step 8)
@@ -29,3 +25,7 @@ Thumbs.db
 .vscode/*
 !.vscode/extensions.json
 .idea/
+
+# TypeScript
+*.pyc
+__pycache__/

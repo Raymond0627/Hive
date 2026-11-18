@@ -2,9 +2,15 @@ import './env'
 
 import Fastify from 'fastify'
 import cors from '@fastify/cors'
+import websocket from '@fastify/websocket'
 import { runAgentTask, geminiUsage, TaskError } from './agents/agentService'
 import { GeminiError } from './agents/gemini'
 import { listAgents } from './store'
+import { addClient, removeClient, clientCount } from './ws'
+import { snapshots } from './sim/snapshot'
+import { startSim } from './sim/loop'
+import { handleClientMessage } from './wsHandlers'
+import { clockLabel } from './sim/state'
 
 const PORT = Number(process.env.PORT ?? 8787)
 const HOST = process.env.HOST ?? '0.0.0.0'
@@ -17,6 +23,16 @@ const app = Fastify({
 await app.register(cors, {
   // Dev only: the browser talks through the Vite proxy, but allow direct calls too.
   origin: true,
+})
+
+await app.register(websocket)
+
+/** Live channel: snapshot on connect, then 10 Hz agent updates. */
+app.get('/ws', { websocket: true }, (socket) => {
+  addClient(socket)
+  socket.send(JSON.stringify({ type: 'world_snapshot', agents: snapshots() }))
+  socket.on('message', (raw: Buffer) => handleClientMessage(raw.toString()))
+  socket.on('close', () => removeClient(socket))
 })
 
 /** Liveness + what the backend currently knows how to do. */
@@ -81,6 +97,7 @@ app.post<{ Body: TaskBody }>('/api/tasks', async (request, reply) => {
 })
 
 await app.listen({ port: PORT, host: HOST })
+startSim()
 app.log.info(`hive server listening on http://localhost:${PORT} (model: ${MODEL})`)
 
 for (const signal of ['SIGINT', 'SIGTERM'] as const) {

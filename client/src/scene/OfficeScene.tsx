@@ -6,6 +6,7 @@ import { Pantry } from './Pantry'
 import { Gym } from './Gym'
 import { Agents } from './AgentModel'
 import { CameraRig } from './CameraRig'
+import { DragLayer } from './DragLayer'
 
 function Lights() {
   return (
@@ -49,6 +50,7 @@ export function OfficeScene() {
       <Pantry />
       <Gym />
       <Agents />
+      <DragLayer />
 
       <CameraRig />
     </>

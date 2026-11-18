@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { OrbitControls, PerspectiveCamera } from '@react-three/drei'
 import * as THREE from 'three'
+import { useStudioStore } from '../store/useStudioStore'
 
 /**
  * Isometric-styled camera with real perspective.
@@ -17,6 +18,7 @@ export function CameraRig() {
   // drei's OrbitControls ref is a three-stdlib instance; only mouseButtons is
   // touched here, so the exact instance type is not worth importing.
   const controls = useRef<any>(null)
+  const dragging = useStudioStore((state) => state.draggingId !== null)
 
   useEffect(() => {
     const setLeftButton = (button: number) => {
@@ -46,6 +48,7 @@ export function CameraRig() {
       <OrbitControls
         ref={controls}
         makeDefault
+        enabled={!dragging}
         target={[0, 0.6, 0]}
         enableDamping
         dampingFactor={0.09}

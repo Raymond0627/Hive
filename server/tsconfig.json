@@ -11,7 +11,6 @@
     "esModuleInterop": true,
     "resolveJsonModule": true,
     "verbatimModuleSyntax": true,
-    "noUncheckedIndexedAccess": true,
     "forceConsistentCasingInFileNames": true
   },
   "include": ["src/**/*.ts", "../shared/src/**/*.ts"]

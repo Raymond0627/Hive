@@ -5,6 +5,7 @@ import { TopBar } from './ui/TopBar'
 import { AgentPanel } from './ui/AgentPanel'
 import { ZoneLegend } from './ui/ZoneLegend'
 import { useStudioStore } from './store/useStudioStore'
+import { connectSocket } from './net/socket'
 
 export default function App() {
   const loadAgents = useStudioStore((state) => state.loadAgents)
@@ -27,6 +28,7 @@ export default function App() {
     }
 
     void tick()
+    connectSocket()
     return () => {
       cancelled = true
       if (timer) window.clearTimeout(timer)
