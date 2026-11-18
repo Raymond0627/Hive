@@ -1,0 +1,31 @@
+# deps
+node_modules/
+.pnp
+.pnp.js
+
+# builds
+dist/
+build/
+*.tsbuildinfo
+
+# env — never commit real keys
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# data (SQLite lands here in step 8)
+server/data/
+*.sqlite
+*.sqlite-journal
+
+# logs / os
+npm-debug.log*
+yarn-error.log*
+.DS_Store
+Thumbs.db
+
+# editors
+.vscode/*
+!.vscode/extensions.json
+.idea/
