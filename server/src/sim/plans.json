@@ -1,0 +1,94 @@
+{
+  "version": 1,
+  "byAgent": {
+    "meow": [
+      { "id": "meow-1", "label": "Deep research", "startMinute": 540, "endMinute": 690, "activity": "working", "slotType": "sit_work" },
+      { "id": "meow-2", "label": "Coffee & stretch", "startMinute": 690, "endMinute": 720, "activity": "idle", "slotType": "drink" },
+      { "id": "meow-3", "label": "Lunch at pantry", "startMinute": 720, "endMinute": 780, "activity": "eating", "slotType": "sit_eat" },
+      { "id": "meow-4", "label": "Data synthesis", "startMinute": 780, "endMinute": 990, "activity": "working", "slotType": "sit_work" },
+      { "id": "meow-5", "label": "Treadmill run", "startMinute": 990, "endMinute": 1050, "activity": "gym", "slotType": "run" }
+    ],
+    "gugel": [
+      { "id": "gugel-1", "label": "Metrics review", "startMinute": 510, "endMinute": 615, "activity": "working", "slotType": "sit_work" },
+      { "id": "gugel-2", "label": "Espresso run", "startMinute": 615, "endMinute": 645, "activity": "idle", "slotType": "drink" },
+      { "id": "gugel-3", "label": "Model spreadsheets", "startMinute": 645, "endMinute": 735, "activity": "working", "slotType": "sit_work" },
+      { "id": "gugel-4", "label": "Lunch break", "startMinute": 735, "endMinute": 780, "activity": "eating", "slotType": "sit_eat" },
+      { "id": "gugel-5", "label": "Team sync", "startMinute": 780, "endMinute": 870, "activity": "working", "slotType": "sit_meet" },
+      { "id": "gugel-6", "label": "Bench press", "startMinute": 870, "endMinute": 940, "activity": "gym", "slotType": "lift" },
+      { "id": "gugel-7", "label": "Wrap up numbers", "startMinute": 940, "endMinute": 1050, "activity": "working", "slotType": "sit_work" }
+    ],
+    "sikyo": [
+      { "id": "sikyo-1", "label": "Creative drafting", "startMinute": 555, "endMinute": 660, "activity": "working", "slotType": "sit_work" },
+      { "id": "sikyo-2", "label": "Coffee & thinking", "startMinute": 660, "endMinute": 690, "activity": "idle", "slotType": "drink" },
+      { "id": "sikyo-3", "label": "Story sync", "startMinute": 690, "endMinute": 750, "activity": "working", "slotType": "sit_meet" },
+      { "id": "sikyo-4", "label": "Lunch with team", "startMinute": 750, "endMinute": 810, "activity": "eating", "slotType": "sit_eat" },
+      { "id": "sikyo-5", "label": "Afternoon editing", "startMinute": 810, "endMinute": 960, "activity": "working", "slotType": "sit_work" },
+      { "id": "sikyo-6", "label": "Yoga & stretch", "startMinute": 960, "endMinute": 1020, "activity": "gym", "slotType": "stretch" }
+    ],
+    "brod": [
+      { "id": "brod-1", "label": "Priority triage", "startMinute": 480, "endMinute": 600, "activity": "working", "slotType": "sit_work" },
+      { "id": "brod-2", "label": "Coffee shot", "startMinute": 600, "endMinute": 630, "activity": "idle", "slotType": "drink" },
+      { "id": "brod-3", "label": "Roadmap review", "startMinute": 630, "endMinute": 720, "activity": "working", "slotType": "sit_work" },
+      { "id": "brod-4", "label": "Quick lunch", "startMinute": 720, "endMinute": 765, "activity": "eating", "slotType": "sit_eat" },
+      { "id": "brod-5", "label": "Strategy check-in", "startMinute": 765, "endMinute": 870, "activity": "working", "slotType": "sit_meet" },
+      { "id": "brod-6", "label": "Dumbbell workout", "startMinute": 870, "endMinute": 945, "activity": "gym", "slotType": "lift" },
+      { "id": "brod-7", "label": "Ship checklist", "startMinute": 945, "endMinute": 1050, "activity": "working", "slotType": "sit_work" }
+    ],
+    "aiz": [
+      { "id": "aiz-1", "label": "Backlog grooming", "startMinute": 525, "endMinute": 630, "activity": "working", "slotType": "sit_work" },
+      { "id": "aiz-2", "label": "Morning tea", "startMinute": 630, "endMinute": 660, "activity": "idle", "slotType": "drink" },
+      { "id": "aiz-3", "label": "Standup meeting", "startMinute": 660, "endMinute": 735, "activity": "working", "slotType": "sit_meet" },
+      { "id": "aiz-4", "label": "Team lunch", "startMinute": 735, "endMinute": 795, "activity": "eating", "slotType": "sit_eat" },
+      { "id": "aiz-5", "label": "Project tracking", "startMinute": 795, "endMinute": 990, "activity": "working", "slotType": "sit_work" },
+      { "id": "aiz-6", "label": "Treadmill run", "startMinute": 990, "endMinute": 1050, "activity": "gym", "slotType": "run" }
+    ]
+  },
+  "byRole": {
+    "Researcher": [
+      { "id": "res-1", "label": "Morning research", "startMinute": 540, "endMinute": 690, "activity": "working", "slotType": "sit_work" },
+      { "id": "res-2", "label": "Coffee break", "startMinute": 690, "endMinute": 720, "activity": "idle", "slotType": "drink" },
+      { "id": "res-3", "label": "Lunch", "startMinute": 720, "endMinute": 780, "activity": "eating", "slotType": "sit_eat" },
+      { "id": "res-4", "label": "Afternoon reading", "startMinute": 780, "endMinute": 990, "activity": "working", "slotType": "sit_work" },
+      { "id": "res-5", "label": "Gym break", "startMinute": 990, "endMinute": 1050, "activity": "gym", "slotType": "run" }
+    ],
+    "Analyst": [
+      { "id": "ana-1", "label": "Numbers review", "startMinute": 510, "endMinute": 630, "activity": "working", "slotType": "sit_work" },
+      { "id": "ana-2", "label": "Coffee", "startMinute": 630, "endMinute": 660, "activity": "idle", "slotType": "drink" },
+      { "id": "ana-3", "label": "Deep analysis", "startMinute": 660, "endMinute": 750, "activity": "working", "slotType": "sit_work" },
+      { "id": "ana-4", "label": "Lunch", "startMinute": 750, "endMinute": 810, "activity": "eating", "slotType": "sit_eat" },
+      { "id": "ana-5", "label": "Team sync", "startMinute": 810, "endMinute": 900, "activity": "working", "slotType": "sit_meet" },
+      { "id": "ana-6", "label": "Strength work", "startMinute": 900, "endMinute": 960, "activity": "gym", "slotType": "lift" },
+      { "id": "ana-7", "label": "Wrap up", "startMinute": 960, "endMinute": 1050, "activity": "working", "slotType": "sit_work" }
+    ],
+    "Writer": [
+      { "id": "wri-1", "label": "Creative drafting", "startMinute": 555, "endMinute": 690, "activity": "working", "slotType": "sit_work" },
+      { "id": "wri-2", "label": "Coffee & notes", "startMinute": 690, "endMinute": 720, "activity": "idle", "slotType": "drink" },
+      { "id": "wri-3", "label": "Lunch", "startMinute": 720, "endMinute": 780, "activity": "eating", "slotType": "sit_eat" },
+      { "id": "wri-4", "label": "Afternoon editing", "startMinute": 780, "endMinute": 960, "activity": "working", "slotType": "sit_work" },
+      { "id": "wri-5", "label": "Stretch break", "startMinute": 960, "endMinute": 1020, "activity": "gym", "slotType": "stretch" }
+    ],
+    "Strategist": [
+      { "id": "str-1", "label": "Priority triage", "startMinute": 480, "endMinute": 600, "activity": "working", "slotType": "sit_work" },
+      { "id": "str-2", "label": "Coffee", "startMinute": 600, "endMinute": 630, "activity": "idle", "slotType": "drink" },
+      { "id": "str-3", "label": "Roadmap review", "startMinute": 630, "endMinute": 720, "activity": "working", "slotType": "sit_work" },
+      { "id": "str-4", "label": "Quick lunch", "startMinute": 720, "endMinute": 765, "activity": "eating", "slotType": "sit_eat" },
+      { "id": "str-5", "label": "Strategy check-in", "startMinute": 765, "endMinute": 870, "activity": "working", "slotType": "sit_meet" },
+      { "id": "str-6", "label": "Workout", "startMinute": 870, "endMinute": 945, "activity": "gym", "slotType": "lift" },
+      { "id": "str-7", "label": "Ship checklist", "startMinute": 945, "endMinute": 1050, "activity": "working", "slotType": "sit_work" }
+    ],
+    "Coordinator": [
+      { "id": "coo-1", "label": "Backlog grooming", "startMinute": 525, "endMinute": 630, "activity": "working", "slotType": "sit_work" },
+      { "id": "coo-2", "label": "Morning tea", "startMinute": 630, "endMinute": 660, "activity": "idle", "slotType": "drink" },
+      { "id": "coo-3", "label": "Standup", "startMinute": 660, "endMinute": 735, "activity": "working", "slotType": "sit_meet" },
+      { "id": "coo-4", "label": "Lunch", "startMinute": 735, "endMinute": 795, "activity": "eating", "slotType": "sit_eat" },
+      { "id": "coo-5", "label": "Project tracking", "startMinute": 795, "endMinute": 990, "activity": "working", "slotType": "sit_work" },
+      { "id": "coo-6", "label": "Gym break", "startMinute": 990, "endMinute": 1050, "activity": "gym", "slotType": "run" }
+    ]
+  },
+  "default": [
+    { "id": "def-1", "label": "Morning focus", "startMinute": 540, "endMinute": 720, "activity": "working", "slotType": "sit_work" },
+    { "id": "def-2", "label": "Lunch at pantry", "startMinute": 720, "endMinute": 780, "activity": "eating", "slotType": "sit_eat" },
+    { "id": "def-3", "label": "Afternoon work", "startMinute": 780, "endMinute": 960, "activity": "working", "slotType": "sit_work" },
+    { "id": "def-4", "label": "Gym session", "startMinute": 960, "endMinute": 1020, "activity": "gym", "slotType": "run" }
+  ]
+}

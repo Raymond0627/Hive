@@ -1,10 +1,15 @@
 import type { AgentPreview } from '@hive/shared'
-import { generateJson, parseTaskResult } from './gemini'
+import { generateJson, generateText, parseTaskResult, GeminiError } from './gemini'
+import { getSim } from '../sim/state'
+import { beginTask, endTask } from '../sim/engine'
+import { recordTaskToVault } from '../vault'
 import {
+  addChatMessage,
   completedTasksFor,
   createTask,
   finishTask,
   getAgent,
+  getChatHistory,
   rememberLastTask,
   rememberLesson,
 } from '../store'
@@ -110,6 +115,7 @@ export async function runAgentTask(agentId: string, prompt: string): Promise<Run
   running.add(agentId)
   usageCount += 1
   agent.activity = 'working'
+  beginTask(agentId)
 
   try {
     const raw = await generateJson({
@@ -128,6 +134,10 @@ export async function runAgentTask(agentId: string, prompt: string): Promise<Run
       at: task.finishedAt ?? Date.now(),
     })
 
+    // Record to Obsidian Second Brain vault (P3.3)
+    recordTaskToVault(agent.name, prompt, parsed.result, parsed.lesson)
+    endTask(agentId, true)
+
     return { task, agent }
   } catch (error) {
     finishTask(task, 'failed', null)
@@ -137,9 +147,118 @@ export async function runAgentTask(agentId: string, prompt: string): Promise<Run
       status: 'failed',
       at: task.finishedAt ?? Date.now(),
     })
+    endTask(agentId, false)
     throw error
   } finally {
     running.delete(agentId)
     agent.activity = 'idle'
+  }
+}
+
+/**
+ * Direct chat from the user to an agent in character (P2.3).
+ */
+export async function runDirectChat(agentId: string, message: string): Promise<string> {
+  const agent = getAgent(agentId)
+  if (!agent) throw new TaskError(404, 'Unknown agent.')
+
+  rollUsageDay()
+  const limit = dailyLimit()
+  if (usageCount >= limit) {
+    throw new TaskError(429, `Daily Gemini limit reached (${limit} requests). Try again tomorrow.`)
+  }
+
+  const sim = getSim(agentId)
+  const currentActivity = sim ? sim.activity : agent.activity
+  const currentMood = sim ? sim.mood : agent.mood
+
+  const system = [
+    `You are ${agent.name}, the ${agent.role} at Hive — an office where AI agents live and work.`,
+    `Personality: ${agent.personality}`,
+    `Rules: ${agent.rules}`,
+    `Context right now: You are currently ${currentActivity} and feeling ${currentMood}.`,
+    '',
+    'A visitor or teammate in the office is speaking to you directly.',
+    'Stay strictly in character. Respond naturally, helpfully, and briefly (at most 28 words).',
+    'Acknowledge what you are doing right now if relevant.',
+  ].join('\n')
+
+  const history = getChatHistory(agentId).slice(-4)
+  const conversationLines: string[] = []
+  for (const h of history) {
+    conversationLines.push(`${h.from === 'user' ? 'Visitor' : agent.name}: ${h.text}`)
+  }
+  conversationLines.push(`Visitor: ${message}`)
+
+  usageCount += 1
+  try {
+    const reply = await generateText({
+      system,
+      user: conversationLines.join('\n'),
+      maxOutputTokens: 60,
+      temperature: 0.85,
+    })
+
+    const cleaned = reply.replace(/^["']|["']$/g, '').trim()
+    addChatMessage(agentId, 'user', message)
+    addChatMessage(agentId, 'agent', cleaned)
+    return cleaned
+  } catch (error) {
+    if (error instanceof GeminiError) throw error
+    throw new TaskError(502, 'Failed to get a response from Gemini.')
+  }
+}
+
+/**
+ * Single turn in an agent-to-agent conversation using context cards (P2.2 & P2.3).
+ */
+export async function runConversationTurn(
+  speakerId: string,
+  listenerId: string,
+  history: Array<{ speakerName: string; text: string }>,
+  topic: string,
+): Promise<string> {
+  const speaker = getAgent(speakerId)
+  const listener = getAgent(listenerId)
+  if (!speaker || !listener) return ''
+
+  rollUsageDay()
+  if (usageCount >= dailyLimit()) return ''
+
+  const speakerSim = getSim(speakerId)
+  const listenerSim = getSim(listenerId)
+  const note = speaker.relationships?.[listenerId] ?? 'First conversation today.'
+
+  const system = [
+    `You are ${speaker.name}, the ${speaker.role} at Hive.`,
+    `Personality: ${speaker.personality}`,
+    `You are having a casual in-office exchange with ${listener.name}, the ${listener.role}.`,
+    `Your current activity: ${speakerSim?.activity ?? speaker.activity}.`,
+    `Their current activity: ${listenerSim?.activity ?? listener.activity}.`,
+    `Relationship memory: ${note}`,
+    `Topic: ${topic}`,
+    '',
+    `Rules: Address ${listener.name} naturally. Max 14 words. Stay in character. Produce only the line spoken.`,
+  ].join('\n')
+
+  const userPrompt =
+    history.length === 0
+      ? `Greet ${listener.name} and bring up the topic.`
+      : history.map((h) => `${h.speakerName}: ${h.text}`).join('\n') + `\n${speaker.name}:`
+
+  usageCount += 1
+  try {
+    const raw = await generateText({
+      system,
+      user: userPrompt,
+      maxOutputTokens: 35,
+      temperature: 0.85,
+    })
+    return raw
+      .replace(/^["']|["']$/g, '')
+      .replace(/^[A-Za-z]+:\s*/, '')
+      .trim()
+  } catch {
+    return ''
   }
 }

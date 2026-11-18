@@ -32,4 +32,18 @@ CREATE TABLE IF NOT EXISTS lessons (
   id INTEGER PRIMARY KEY AUTOINCREMENT, agent_id TEXT NOT NULL,
   text TEXT NOT NULL, created_at INTEGER NOT NULL
 );
+CREATE TABLE IF NOT EXISTS relationships (
+  agent_id TEXT NOT NULL,
+  other_id TEXT NOT NULL,
+  note TEXT NOT NULL,
+  updated_at INTEGER NOT NULL,
+  PRIMARY KEY (agent_id, other_id)
+);
+CREATE TABLE IF NOT EXISTS direct_chats (
+  id TEXT PRIMARY KEY,
+  agent_id TEXT NOT NULL,
+  sender TEXT NOT NULL,
+  text TEXT NOT NULL,
+  created_at INTEGER NOT NULL
+);
 `)

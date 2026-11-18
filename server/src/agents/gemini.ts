@@ -34,12 +34,34 @@ interface GeminiResponse {
 export interface GenerateJsonInput {
   system: string
   user: string
+  model?: string
   maxOutputTokens?: number
   timeoutMs?: number
 }
 
+export interface GenerateTextInput {
+  system: string
+  user: string
+  model?: string
+  maxOutputTokens?: number
+  timeoutMs?: number
+  temperature?: number
+}
+
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+export function getTaskModel(): string {
+  return process.env.GEMINI_MODEL?.trim() || 'gemini-flash-latest'
+}
+
+export function getCheapModel(): string {
+  return (
+    process.env.GEMINI_MODEL_CHEAP?.trim() ||
+    process.env.GEMINI_MODEL?.trim() ||
+    'gemini-flash-latest'
+  )
 }
 
 /** Pull Google's error message out of a failed response without leaking the key. */
@@ -50,6 +72,85 @@ function readError(body: string, fallback: string): string {
   } catch {
     return fallback
   }
+}
+
+/**
+ * Generate plain text from Gemini with model fallback and retries.
+ */
+export async function generateText(input: GenerateTextInput): Promise<string> {
+  const apiKey = process.env.GEMINI_API_KEY?.trim()
+  if (!apiKey) {
+    throw new GeminiError(
+      'GEMINI_API_KEY is not set on the server. Add it to .env and restart.',
+      500,
+    )
+  }
+
+  const model = input.model?.trim() || getCheapModel()
+  const url = `${API_BASE}/models/${encodeURIComponent(model)}:generateContent`
+
+  const body = JSON.stringify({
+    systemInstruction: { parts: [{ text: input.system }] },
+    contents: [{ role: 'user', parts: [{ text: input.user }] }],
+    generationConfig: {
+      temperature: input.temperature ?? 0.8,
+      maxOutputTokens: input.maxOutputTokens ?? 120,
+    },
+  })
+
+  let lastError: unknown = new GeminiError('Gemini request failed.')
+
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-goog-api-key': apiKey,
+        },
+        body,
+        signal: AbortSignal.timeout(input.timeoutMs ?? 20_000),
+      })
+
+      if (!response.ok) {
+        const text = await response.text().catch(() => '')
+        throw new GeminiError(
+          readError(text, `Gemini returned HTTP ${response.status}.`),
+          response.status,
+        )
+      }
+
+      const data = (await response.json()) as GeminiResponse
+      const text =
+        data.candidates?.[0]?.content?.parts
+          ?.map((part) => part.text ?? '')
+          .join('')
+          .trim() ?? ''
+
+      if (!text) {
+        const blocked = data.promptFeedback?.blockReason
+        throw new GeminiError(
+          blocked
+            ? `Gemini blocked the prompt (${blocked}).`
+            : 'Gemini returned an empty response. Try again.',
+        )
+      }
+
+      return text
+    } catch (error) {
+      lastError = error
+      const status = error instanceof GeminiError ? error.status : 0
+      const retryable = status === 0 || RETRYABLE.has(status)
+      if (!retryable || attempt === 2) break
+      await sleep(500 * 2 ** attempt)
+    }
+  }
+
+  if (lastError instanceof GeminiError) throw lastError
+  if (lastError instanceof Error && lastError.name === 'TimeoutError') {
+    throw new GeminiError('Gemini took too long to answer.', 504)
+  }
+  throw new GeminiError('Could not reach the Gemini API.', 502)
 }
 
 /**
@@ -65,7 +166,7 @@ export async function generateJson(input: GenerateJsonInput): Promise<string> {
     )
   }
 
-  const model = process.env.GEMINI_MODEL?.trim() || 'gemini-flash-latest'
+  const model = input.model?.trim() || getTaskModel()
   const url = `${API_BASE}/models/${encodeURIComponent(model)}:generateContent`
 
   const body = JSON.stringify({

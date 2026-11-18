@@ -19,12 +19,18 @@ order defined by section 11 of the project brief.
 | 8 | SQLite persistence | pending |
 | 9 | Gemini task flow + lessons | done (server + panel) |
 | 10 | Customizer, error handling, spend limits | pending |
+| P2.1 | Activity-tied speech & emotes | done |
+| P2.2 | Two-way conversations | done |
+| P2.3 | Identity context & direct chat | done |
+| P3.1 | Needs & mood engine (energy, hunger, social, fun) | done |
+| P3.2 | Relationships, affinity (-100..100) & invitations | done |
+| P3.3 | Physical task reactions (celebrate/frustrated gestures) | done |
+| P3.4 | Obsidian Second Brain vault (Markdown + [[wikilinks]]) | done |
 
-Step 9 is wired end to end against the REST API: the panel posts a task, the
-server builds the persona prompt, calls Gemini, saves the reply and the lesson,
-and the panel re-renders. Tasks and lessons live **in memory** until step 8, so
-a server restart resets them. The agent does not walk to its desk yet — that is
-the simulation in steps 5-6.
+Phase 1 (steps 1-7, 9) and Phase 2 (P1 daily plans, P0.2 furniture JSON, P2
+speech/conversations/direct chat) are wired end to end. Tasks, lessons and chat
+history live **in memory** until step 8 (SQLite) lands. The agent walks to its
+desk for tasks, plays a done gesture, and resumes its daily plan.
 
 ## Requirements
 
@@ -73,6 +79,22 @@ truth. Agent identity comes from `GET /api/agents` (seeded from
 | `GET /api/agents` | Five starter agents with state, lessons, last task |
 | `GET /api/usage` | Daily Gemini budget |
 | `POST /api/tasks` | `{ agentId, prompt }` → runs Gemini, returns `{ task, agent }` |
+| `POST /api/chat` | Direct in-character chat with an agent (cheap model) |
+| `GET /api/vault/:id` | Raw Obsidian Second Brain markdown document |
+| `GET /api/relationships/:id` | Directed colleague affinities and notes |
+
+## Obsidian Second Brain 🧠
+
+Hive maintains a real, human-readable Obsidian knowledge vault on disk at:
+`server/data/vault/` (configurable with `OBSIDIAN_VAULT_PATH`).
+
+You can open this folder directly inside [Obsidian](https://obsidian.md) to explore the live knowledge graph:
+- **`Agents/`**: One Markdown note per agent with YAML frontmatter, live needs (`energy`, `hunger`, `social`, `fun`), traits, mood, daily schedules, and `[[wikilinks]]` to colleagues.
+- **`Relationships/`**: Two-way dialogue transcripts and affinity notes between colleagues.
+- **`Lessons/`**: Knowledge learned across Gemini tasks.
+- **`Tasks/`**: Deliverables and task logs.
+
+Inside Hive's UI, click any agent and switch to the **Second Brain** tab to inspect their note live.
 
 ## Gemini
 

@@ -15,11 +15,19 @@ const NEIGHBOURS: Array<[number, number, number]> = [
 const index = (x: number, y: number) => y * GRID_SIZE + x
 const heuristic = (a: Cell, b: Cell) => Math.hypot(a.x - b.x, a.y - b.y)
 
+/** Extra cost for cells other agents are standing on, so paths prefer open routes. */
+const CROWD_PENALTY = 6
+
+export interface PathOptions {
+  /** Soft obstacle: still passable, but avoided when a detour is cheap. */
+  isCrowded?: (cell: Cell) => boolean
+}
+
 /**
  * A* over the walkable grid. Returns the full path including `to`, or null if
  * the target is blocked or unreachable. Diagonal moves may not cut corners.
  */
-export function findPath(from: Cell, to: Cell): Cell[] | null {
+export function findPath(from: Cell, to: Cell, options: PathOptions = {}): Cell[] | null {
   if (!isWalkable(from) || !isWalkable(to)) return null
   if (from.x === to.x && from.y === to.y) return [{ ...from }]
 
@@ -58,7 +66,8 @@ export function findPath(from: Cell, to: Cell): Cell[] | null {
         continue
       }
       const nextIndex = index(next.x, next.y)
-      const tentative = gScore[currentIndex] + cost
+      const crowding = options.isCrowded?.(next) ? CROWD_PENALTY : 0
+      const tentative = gScore[currentIndex] + cost + crowding
       if (tentative >= gScore[nextIndex]) continue
       cameFrom[nextIndex] = currentIndex
       gScore[nextIndex] = tentative

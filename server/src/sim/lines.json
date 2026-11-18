@@ -1,0 +1,222 @@
+{
+  "emotes": {
+    "run": ["🏃", "💪", "🔥", "⚡"],
+    "lift": ["🏋️", "💪", "💥"],
+    "pushups": ["💪", "😤", "🔥"],
+    "jacks": ["⭐", "🏃", "✨"],
+    "stretch": ["🧘", "🌿", "✨"],
+    "eat": ["🍽️", "🥗", "🥪", "😋"],
+    "drink": ["☕", "🍵", "🧃"],
+    "cook": ["🍳", "🍲", "🧑‍🍳"],
+    "work": ["💻", "💡", "📊", "⚡"],
+    "idle": ["💭", "👀", "🌤️", "✨"]
+  },
+  "activities": {
+    "treadmill": {
+      "starting": [
+        "Starting the pace slow.",
+        "5k today, let's get into it.",
+        "First kilometre.",
+        "Warmup lap."
+      ],
+      "mid_run": [
+        "Good rhythm now.",
+        "Pace is holding steady.",
+        "Heart rate in zone 3.",
+        "Mile two down."
+      ],
+      "tired": [
+        "Incline was a mistake...",
+        "Catching my breath.",
+        "Pushing through the burn.",
+        "Water after this set."
+      ],
+      "finishing": [
+        "Cooling down now.",
+        "Last thirty seconds.",
+        "Good run, feeling sharper.",
+        "Legs feel light."
+      ]
+    },
+    "bench": {
+      "starting": [
+        "Warming up the shoulders.",
+        "First set, clean form.",
+        "Bar feels good."
+      ],
+      "mid_set": [
+        "Four... five... solid.",
+        "Locking out each rep.",
+        "Chest up, driving from the heels."
+      ],
+      "struggling": [
+        "Last two reps are heavy.",
+        "One more push...",
+        "Deep breath."
+      ],
+      "done": [
+        "Set done. Solid pump.",
+        "Racking it up.",
+        "Rested and ready for the next one."
+      ]
+    },
+    "pushups": {
+      "counting": [
+        "Ten... twelve... steady.",
+        "Chest to floor.",
+        "Core tight."
+      ],
+      "struggling": [
+        "Arms starting to shake.",
+        "Three more.",
+        "Push through."
+      ],
+      "done": [
+        "Done. Shoulders are awake.",
+        "Quick shakeout.",
+        "That woke me up."
+      ]
+    },
+    "stretch": {
+      "inhale": [
+        "Deep breath in.",
+        "Lengthening the spine.",
+        "Shoulder release."
+      ],
+      "exhale": [
+        "Letting the neck tension drop.",
+        "Slow exhale.",
+        "Posture check."
+      ],
+      "relaxed": [
+        "Much better. Back was tight.",
+        "Ready to sit again.",
+        "Feeling centred."
+      ]
+    },
+    "eat": {
+      "hungry": [
+        "Finally, time for lunch.",
+        "Starving today.",
+        "Desk sandwich avoided."
+      ],
+      "tasty": [
+        "This is actually great today.",
+        "Good flavor balance.",
+        "Quiet spot to recharge."
+      ],
+      "full": [
+        "Proper food makes all the difference.",
+        "Refueled and ready.",
+        "That hit the spot."
+      ]
+    },
+    "drink": {
+      "morning": [
+        "Morning brew.",
+        "Coffee: fuel for the morning.",
+        "Fresh roast."
+      ],
+      "refill": [
+        "Quick top-up.",
+        "Afternoon cup.",
+        "Hydration check."
+      ],
+      "caffeine": [
+        "Caffeine kick kicking in.",
+        "That's the boost I needed.",
+        "Ready to dive back in."
+      ]
+    },
+    "cook": {
+      "prepping": [
+        "Prepping a quick snack.",
+        "Chopping a few greens.",
+        "Pantry smells great."
+      ],
+      "simmering": [
+        "Heating up nicely.",
+        "Almost ready to serve.",
+        "Two minutes on the clock."
+      ],
+      "done": [
+        "Plated and ready.",
+        "Smells fantastic.",
+        "Bon appétit."
+      ]
+    },
+    "work": {
+      "focused": [
+        "In the flow state.",
+        "Piece by piece.",
+        "Focus block underway."
+      ],
+      "stuck": [
+        "Interesting edge case here...",
+        "Double-checking these premises.",
+        "Need a fresh look at this."
+      ],
+      "finished": [
+        "Wrapped up this section.",
+        "Looks solid.",
+        "Ready for the next sprint."
+      ]
+    }
+  },
+  "conversations": {
+    "greetings": {
+      "meow": "Hey {name}. Did you check that recent benchmark?",
+      "gugel": "Morning {name}. Metrics are looking unusually clean today.",
+      "sikyo": "Hey {name}! How's your day shaping up?",
+      "brod": "{name}. We on track for today's deliverables?",
+      "aiz": "Hi {name}! Everything moving smoothly with your tasks?",
+      "default": "Hey {name}! Good to see you."
+    },
+    "reactions": {
+      "accept": [
+        "Hey! Yeah, got a quick minute.",
+        "Always good to take a breather, what's on your mind?",
+        "Right on time. Yeah, let's sync.",
+        "Hey there! All good here, how about you?"
+      ],
+      "delay": [
+        "Hey! Just finishing a thought, one sec!",
+        "Catch you right after I wrap this line!",
+        "Almost done with this, back in a second!"
+      ],
+      "wave": [
+        "Hey! Catch you at lunch!",
+        "Heads down right now, speak soon!",
+        "Quick wave—on a deadline!"
+      ]
+    },
+    "exchanges": [
+      {
+        "topic": "workload",
+        "turn1": "The sprint queue is moving fast today.",
+        "turn2": "Noticed that too. Good momentum across the board."
+      },
+      {
+        "topic": "coffee",
+        "turn1": "Pantry coffee was freshly made if you need a cup.",
+        "turn2": "Definitely hitting that machine before my next focus block."
+      },
+      {
+        "topic": "gym",
+        "turn1": "Good energy in the gym earlier.",
+        "turn2": "Yeah! Keeps the brain from turning into mush at the screen."
+      },
+      {
+        "topic": "progress",
+        "turn1": "Making great headway on today's plan.",
+        "turn2": "Same here. Nice when everything clicks into place."
+      }
+    ],
+    "wrapUps": [
+      "Gotta get back to the screen, let's catch up later!",
+      "Laptop's waiting, talk soon!",
+      "Back to it! Catch you at the next break.",
+      "Good catching up {name}, see you around!"
+    ]
+  }
+}

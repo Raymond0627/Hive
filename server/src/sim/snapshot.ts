@@ -2,7 +2,7 @@ import type { AgentSnapshot } from '@hive/shared'
 import { getAgent } from '../store'
 import { allSims } from './state'
 
-/** Identity from the store + live position and activity from the simulation. */
+/** Identity from the store + live position, pose and interaction from the sim. */
 export function snapshots(): AgentSnapshot[] {
   const result: AgentSnapshot[] = []
   for (const sim of allSims()) {
@@ -12,6 +12,16 @@ export function snapshots(): AgentSnapshot[] {
     result.push({
       ...agent,
       activity: sim.activity,
+      animation: sim.animation,
+      facing: sim.facing,
+      slotId: sim.slotId,
+      goal: sim.goal,
+      path: sim.path.slice(0, 5),
+      plan: sim.plan,
+      needs: sim.needs,
+      traits: sim.traits,
+      speech: sim.speech,
+      talkingWith: sim.talkingWith,
       mood: sim.mood,
       x: sim.x,
       y: sim.y,

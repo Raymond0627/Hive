@@ -42,9 +42,14 @@ export default {
           '0%, 100%': { opacity: '1' },
           '50%': { opacity: '0.35' },
         },
+        'bubble-in': {
+          '0%': { opacity: '0', transform: 'translateY(4px) scale(0.92)' },
+          '100%': { opacity: '1', transform: 'translateY(0) scale(1)' },
+        },
       },
       animation: {
         'pulse-soft': 'pulse-soft 2.4s ease-in-out infinite',
+        'bubble-in': 'bubble-in 160ms ease-out both',
       },
     },
   },

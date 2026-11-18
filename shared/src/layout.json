@@ -1,0 +1,323 @@
+{
+  "version": 1,
+  "gridSize": 40,
+  "zones": {
+    "work": { "x0": 2, "y0": 1, "x1": 38, "y1": 17 },
+    "pantry": { "x0": 2, "y0": 19, "x1": 18, "y1": 38 },
+    "gym": { "x0": 22, "y0": 19, "x1": 38, "y1": 38 }
+  },
+  "furniture": [
+    {
+      "id": "desk-meow",
+      "type": "desk",
+      "agentId": "meow",
+      "at": { "x": 5, "y": 7 },
+      "footprint": [
+        { "x": 4, "y": 6 }, { "x": 5, "y": 6 }, { "x": 6, "y": 6 },
+        { "x": 4, "y": 7 }, { "x": 5, "y": 7 }, { "x": 6, "y": 7 },
+        { "x": 4, "y": 8 }, { "x": 5, "y": 8 }, { "x": 6, "y": 8 }
+      ],
+      "slots": [
+        {
+          "id": "desk-meow",
+          "type": "sit_work",
+          "animation": "type",
+          "stand": { "x": 5, "y": 9 },
+          "facing": 3.141592653589793,
+          "activity": "working",
+          "minutes": 45,
+          "furnitureId": "desk-meow"
+        }
+      ]
+    },
+    {
+      "id": "desk-gugel",
+      "type": "desk",
+      "agentId": "gugel",
+      "at": { "x": 12, "y": 7 },
+      "footprint": [
+        { "x": 11, "y": 6 }, { "x": 12, "y": 6 }, { "x": 13, "y": 6 },
+        { "x": 11, "y": 7 }, { "x": 12, "y": 7 }, { "x": 13, "y": 7 },
+        { "x": 11, "y": 8 }, { "x": 12, "y": 8 }, { "x": 13, "y": 8 }
+      ],
+      "slots": [
+        {
+          "id": "desk-gugel",
+          "type": "sit_work",
+          "animation": "type",
+          "stand": { "x": 12, "y": 9 },
+          "facing": 3.141592653589793,
+          "activity": "working",
+          "minutes": 45,
+          "furnitureId": "desk-gugel"
+        }
+      ]
+    },
+    {
+      "id": "desk-sikyo",
+      "type": "desk",
+      "agentId": "sikyo",
+      "at": { "x": 20, "y": 7 },
+      "footprint": [
+        { "x": 19, "y": 6 }, { "x": 20, "y": 6 }, { "x": 21, "y": 6 },
+        { "x": 19, "y": 7 }, { "x": 20, "y": 7 }, { "x": 21, "y": 7 },
+        { "x": 19, "y": 8 }, { "x": 20, "y": 8 }, { "x": 21, "y": 8 }
+      ],
+      "slots": [
+        {
+          "id": "desk-sikyo",
+          "type": "sit_work",
+          "animation": "type",
+          "stand": { "x": 20, "y": 9 },
+          "facing": 3.141592653589793,
+          "activity": "working",
+          "minutes": 45,
+          "furnitureId": "desk-sikyo"
+        }
+      ]
+    },
+    {
+      "id": "desk-brod",
+      "type": "desk",
+      "agentId": "brod",
+      "at": { "x": 28, "y": 7 },
+      "footprint": [
+        { "x": 27, "y": 6 }, { "x": 28, "y": 6 }, { "x": 29, "y": 6 },
+        { "x": 27, "y": 7 }, { "x": 28, "y": 7 }, { "x": 29, "y": 7 },
+        { "x": 27, "y": 8 }, { "x": 28, "y": 8 }, { "x": 29, "y": 8 }
+      ],
+      "slots": [
+        {
+          "id": "desk-brod",
+          "type": "sit_work",
+          "animation": "type",
+          "stand": { "x": 28, "y": 9 },
+          "facing": 3.141592653589793,
+          "activity": "working",
+          "minutes": 45,
+          "furnitureId": "desk-brod"
+        }
+      ]
+    },
+    {
+      "id": "desk-aiz",
+      "type": "desk",
+      "agentId": "aiz",
+      "at": { "x": 35, "y": 7 },
+      "footprint": [
+        { "x": 34, "y": 6 }, { "x": 35, "y": 6 }, { "x": 36, "y": 6 },
+        { "x": 34, "y": 7 }, { "x": 35, "y": 7 }, { "x": 36, "y": 7 },
+        { "x": 34, "y": 8 }, { "x": 35, "y": 8 }, { "x": 36, "y": 8 }
+      ],
+      "slots": [
+        {
+          "id": "desk-aiz",
+          "type": "sit_work",
+          "animation": "type",
+          "stand": { "x": 35, "y": 9 },
+          "facing": 3.141592653589793,
+          "activity": "working",
+          "minutes": 45,
+          "furnitureId": "desk-aiz"
+        }
+      ]
+    },
+    {
+      "id": "meeting-table",
+      "type": "table",
+      "variant": "meeting",
+      "at": { "x": 20, "y": 14 },
+      "footprint": [
+        { "x": 18, "y": 12 }, { "x": 19, "y": 12 }, { "x": 20, "y": 12 }, { "x": 21, "y": 12 }, { "x": 22, "y": 12 },
+        { "x": 18, "y": 13 }, { "x": 19, "y": 13 }, { "x": 20, "y": 13 }, { "x": 21, "y": 13 }, { "x": 22, "y": 13 },
+        { "x": 18, "y": 14 }, { "x": 19, "y": 14 }, { "x": 20, "y": 14 }, { "x": 21, "y": 14 }, { "x": 22, "y": 14 },
+        { "x": 18, "y": 15 }, { "x": 19, "y": 15 }, { "x": 20, "y": 15 }, { "x": 21, "y": 15 }, { "x": 22, "y": 15 },
+        { "x": 18, "y": 16 }, { "x": 19, "y": 16 }, { "x": 20, "y": 16 }, { "x": 21, "y": 16 }, { "x": 22, "y": 16 }
+      ],
+      "slots": [
+        { "id": "meet-west", "type": "sit_meet", "animation": "type", "stand": { "x": 17, "y": 14 }, "facing": 1.5707963267948966, "activity": "working", "minutes": 25, "furnitureId": "meeting-table" },
+        { "id": "meet-east", "type": "sit_meet", "animation": "type", "stand": { "x": 23, "y": 14 }, "facing": -1.5707963267948966, "activity": "working", "minutes": 25, "furnitureId": "meeting-table" },
+        { "id": "meet-north", "type": "sit_meet", "animation": "type", "stand": { "x": 20, "y": 11 }, "facing": 0, "activity": "working", "minutes": 25, "furnitureId": "meeting-table" },
+        { "id": "meet-south", "type": "sit_meet", "animation": "type", "stand": { "x": 20, "y": 17 }, "facing": 3.141592653589793, "activity": "working", "minutes": 25, "furnitureId": "meeting-table" }
+      ]
+    },
+    {
+      "id": "dining-table",
+      "type": "table",
+      "variant": "dining",
+      "at": { "x": 10.5, "y": 30 },
+      "footprint": [
+        { "x": 9, "y": 28 }, { "x": 10, "y": 28 }, { "x": 11, "y": 28 }, { "x": 12, "y": 28 },
+        { "x": 9, "y": 29 }, { "x": 10, "y": 29 }, { "x": 11, "y": 29 }, { "x": 12, "y": 29 },
+        { "x": 9, "y": 30 }, { "x": 10, "y": 30 }, { "x": 11, "y": 30 }, { "x": 12, "y": 30 },
+        { "x": 9, "y": 31 }, { "x": 10, "y": 31 }, { "x": 11, "y": 31 }, { "x": 12, "y": 31 },
+        { "x": 9, "y": 32 }, { "x": 10, "y": 32 }, { "x": 11, "y": 32 }, { "x": 12, "y": 32 }
+      ],
+      "slots": [
+        { "id": "dine-west", "type": "sit_eat", "animation": "eat", "stand": { "x": 8, "y": 30 }, "facing": 1.5707963267948966, "activity": "eating", "minutes": 35, "furnitureId": "dining-table" },
+        { "id": "dine-east", "type": "sit_eat", "animation": "eat", "stand": { "x": 14, "y": 30 }, "facing": -1.5707963267948966, "activity": "eating", "minutes": 35, "furnitureId": "dining-table" },
+        { "id": "dine-north", "type": "sit_eat", "animation": "eat", "stand": { "x": 11, "y": 27 }, "facing": 0, "activity": "eating", "minutes": 35, "furnitureId": "dining-table" },
+        { "id": "dine-south", "type": "sit_eat", "animation": "eat", "stand": { "x": 11, "y": 33 }, "facing": 3.141592653589793, "activity": "eating", "minutes": 35, "furnitureId": "dining-table" }
+      ]
+    },
+    {
+      "id": "kitchen-run",
+      "type": "counter",
+      "at": { "x": 1, "y": 25 },
+      "footprint": [
+        { "x": 0, "y": 20 }, { "x": 1, "y": 20 }, { "x": 2, "y": 20 },
+        { "x": 0, "y": 21 }, { "x": 1, "y": 21 }, { "x": 2, "y": 21 },
+        { "x": 0, "y": 22 }, { "x": 1, "y": 22 }, { "x": 2, "y": 22 },
+        { "x": 0, "y": 23 }, { "x": 1, "y": 23 }, { "x": 2, "y": 23 },
+        { "x": 0, "y": 24 }, { "x": 1, "y": 24 }, { "x": 2, "y": 24 },
+        { "x": 0, "y": 25 }, { "x": 1, "y": 25 }, { "x": 2, "y": 25 },
+        { "x": 0, "y": 26 }, { "x": 1, "y": 26 }, { "x": 2, "y": 26 },
+        { "x": 0, "y": 27 }, { "x": 1, "y": 27 }, { "x": 2, "y": 27 },
+        { "x": 0, "y": 28 }, { "x": 1, "y": 28 }, { "x": 2, "y": 28 },
+        { "x": 0, "y": 29 }, { "x": 1, "y": 29 }, { "x": 2, "y": 29 },
+        { "x": 0, "y": 30 }, { "x": 1, "y": 30 }, { "x": 2, "y": 30 }
+      ],
+      "slots": [
+        { "id": "coffee", "type": "drink", "animation": "drink", "stand": { "x": 3, "y": 22 }, "facing": -1.5707963267948966, "activity": "idle", "minutes": 10, "furnitureId": "kitchen-run" },
+        { "id": "stove", "type": "cook", "animation": "cook", "stand": { "x": 3, "y": 26 }, "facing": -1.5707963267948966, "activity": "idle", "minutes": 20, "furnitureId": "kitchen-run" }
+      ]
+    },
+    {
+      "id": "fridge",
+      "type": "fridge",
+      "at": { "x": 2, "y": 33.5 },
+      "footprint": [
+        { "x": 1, "y": 32 }, { "x": 2, "y": 32 }, { "x": 3, "y": 32 },
+        { "x": 1, "y": 33 }, { "x": 2, "y": 33 }, { "x": 3, "y": 33 },
+        { "x": 1, "y": 34 }, { "x": 2, "y": 34 }, { "x": 3, "y": 34 },
+        { "x": 1, "y": 35 }, { "x": 2, "y": 35 }, { "x": 3, "y": 35 }
+      ],
+      "slots": [
+        { "id": "fridge-snack", "type": "drink", "animation": "drink", "stand": { "x": 4, "y": 34 }, "facing": -1.5707963267948966, "activity": "idle", "minutes": 8, "furnitureId": "fridge" }
+      ]
+    },
+    {
+      "id": "treadmill",
+      "type": "treadmill",
+      "at": { "x": 35, "y": 22 },
+      "footprint": [
+        { "x": 34, "y": 21 }, { "x": 35, "y": 21 }, { "x": 36, "y": 21 },
+        { "x": 34, "y": 22 }, { "x": 36, "y": 22 },
+        { "x": 34, "y": 23 }, { "x": 36, "y": 23 }
+      ],
+      "slots": [
+        { "id": "treadmill-run", "type": "run", "animation": "run", "stand": { "x": 35, "y": 22 }, "facing": 3.141592653589793, "activity": "gym", "minutes": 30, "furnitureId": "treadmill" }
+      ]
+    },
+    {
+      "id": "bench-press",
+      "type": "bench",
+      "at": { "x": 28, "y": 25 },
+      "footprint": [
+        { "x": 27, "y": 24 }, { "x": 28, "y": 24 }, { "x": 29, "y": 24 },
+        { "x": 27, "y": 25 }, { "x": 28, "y": 25 }, { "x": 29, "y": 25 },
+        { "x": 27, "y": 26 }, { "x": 28, "y": 26 }, { "x": 29, "y": 26 }
+      ],
+      "slots": [
+        { "id": "bench-lift", "type": "lift", "animation": "lift", "stand": { "x": 28, "y": 28 }, "facing": 3.141592653589793, "activity": "gym", "minutes": 30, "furnitureId": "bench-press" }
+      ]
+    },
+    {
+      "id": "dumbbell-rack",
+      "type": "rack",
+      "at": { "x": 37.5, "y": 32 },
+      "footprint": [
+        { "x": 37, "y": 31 }, { "x": 38, "y": 31 },
+        { "x": 37, "y": 32 }, { "x": 38, "y": 32 },
+        { "x": 37, "y": 33 }, { "x": 38, "y": 33 }
+      ],
+      "slots": [
+        { "id": "dumbbell-lift", "type": "lift", "animation": "lift", "stand": { "x": 36, "y": 32 }, "facing": 1.5707963267948966, "activity": "gym", "minutes": 25, "furnitureId": "dumbbell-rack" }
+      ]
+    },
+    {
+      "id": "yoga-mat",
+      "type": "mat",
+      "at": { "x": 32.33, "y": 34.33 },
+      "rotation": 0.16,
+      "footprint": [],
+      "slots": [
+        { "id": "yoga-stretch", "type": "stretch", "animation": "stretch", "stand": { "x": 32, "y": 34 }, "facing": 0, "activity": "gym", "minutes": 20, "furnitureId": "yoga-mat" },
+        { "id": "mat-pushups", "type": "pushups", "animation": "pushups", "stand": { "x": 31, "y": 35 }, "facing": 0, "activity": "gym", "minutes": 20, "furnitureId": "yoga-mat" },
+        { "id": "mat-jacks", "type": "jacks", "animation": "jacks", "stand": { "x": 34, "y": 35 }, "facing": 0, "activity": "gym", "minutes": 15, "furnitureId": "yoga-mat" }
+      ]
+    },
+    {
+      "id": "bookshelf",
+      "type": "bookshelf",
+      "at": { "x": 2, "y": 11.5 },
+      "footprint": [
+        { "x": 1, "y": 9 }, { "x": 2, "y": 9 }, { "x": 3, "y": 9 },
+        { "x": 1, "y": 10 }, { "x": 2, "y": 10 }, { "x": 3, "y": 10 },
+        { "x": 1, "y": 11 }, { "x": 2, "y": 11 }, { "x": 3, "y": 11 },
+        { "x": 1, "y": 12 }, { "x": 2, "y": 12 }, { "x": 3, "y": 12 },
+        { "x": 1, "y": 13 }, { "x": 2, "y": 13 }, { "x": 3, "y": 13 },
+        { "x": 1, "y": 14 }, { "x": 2, "y": 14 }, { "x": 3, "y": 14 }
+      ],
+      "slots": []
+    },
+    {
+      "id": "work-plant-left",
+      "type": "plant",
+      "at": { "x": 3, "y": 16 },
+      "scale": 1,
+      "footprint": [],
+      "slots": []
+    },
+    {
+      "id": "work-plant-right",
+      "type": "plant",
+      "at": { "x": 37, "y": 16 },
+      "scale": 0.9,
+      "footprint": [],
+      "slots": []
+    },
+    {
+      "id": "pantry-plant",
+      "type": "plant",
+      "at": { "x": 2.7, "y": 36.8 },
+      "scale": 0.85,
+      "footprint": [],
+      "slots": []
+    },
+    {
+      "id": "water-cooler",
+      "type": "water-cooler",
+      "at": { "x": 15.67, "y": 36.17 },
+      "footprint": [
+        { "x": 15, "y": 35 }, { "x": 16, "y": 35 }, { "x": 17, "y": 35 },
+        { "x": 15, "y": 36 }, { "x": 16, "y": 36 }, { "x": 17, "y": 36 },
+        { "x": 15, "y": 37 }, { "x": 16, "y": 37 }, { "x": 17, "y": 37 }
+      ],
+      "slots": []
+    },
+    {
+      "id": "kettlebell-corner",
+      "type": "kettlebells",
+      "at": { "x": 26, "y": 34.17 },
+      "footprint": [
+        { "x": 25, "y": 33 }, { "x": 26, "y": 33 }, { "x": 27, "y": 33 },
+        { "x": 25, "y": 34 }, { "x": 26, "y": 34 }, { "x": 27, "y": 34 },
+        { "x": 25, "y": 35 }, { "x": 26, "y": 35 }, { "x": 27, "y": 35 }
+      ],
+      "slots": []
+    },
+    {
+      "id": "gym-plant",
+      "type": "plant",
+      "at": { "x": 38.33, "y": 37.2 },
+      "scale": 0.85,
+      "footprint": [
+        { "x": 37, "y": 36 }, { "x": 38, "y": 36 }, { "x": 39, "y": 36 },
+        { "x": 37, "y": 37 }, { "x": 38, "y": 37 }, { "x": 39, "y": 37 },
+        { "x": 37, "y": 38 }, { "x": 38, "y": 38 }, { "x": 39, "y": 38 }
+      ],
+      "slots": []
+    }
+  ]
+}

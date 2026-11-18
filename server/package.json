@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "start": "tsx src/index.ts",
-    "test": "node --import tsx --test src/sim/pathfinding.test.ts",
+    "test": "node --import tsx --test src/sim/pathfinding.test.ts src/sim/stress.test.ts src/sim/plans.test.ts src/sim/needs.test.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

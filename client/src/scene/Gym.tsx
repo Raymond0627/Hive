@@ -146,7 +146,7 @@ function Kettlebells({ x, z }: { x: number; z: number }) {
 export function Gym() {
   return (
     <group>
-      <Treadmill x={9.3} z={1.4} />
+      <Treadmill x={9.0} z={1.2} />
       <BenchPress x={4.9} z={3.1} />
       <DumbbellRack x={10.9} z={7.2} />
       <Kettlebells x={3.6} z={8.5} />

@@ -6,7 +6,17 @@
  * server lands in the right place on screen without a second coordinate list.
  */
 
-export const GRID_SIZE = 40
+import {
+  OFFICE_LAYOUT,
+  ZONES as SHARED_ZONES,
+  GRID_SIZE as SHARED_GRID_SIZE,
+  DESK_FURNITURE,
+  type ZoneName as SharedZoneName,
+} from '@hive/shared'
+
+export { OFFICE_LAYOUT }
+
+export const GRID_SIZE = SHARED_GRID_SIZE
 
 /** World units per grid cell. The room is 24x24 units, i.e. 40 cells wide. */
 export const TILE = 0.6
@@ -25,14 +35,10 @@ export function gridToWorld(gx: number, gy: number) {
   }
 }
 
-/** Inclusive grid rectangles. Kept in grid space so step 4 can reuse them. */
-export const ZONES = {
-  work: { x0: 2, y0: 1, x1: 38, y1: 17 },
-  pantry: { x0: 2, y0: 19, x1: 18, y1: 38 },
-  gym: { x0: 22, y0: 19, x1: 38, y1: 38 },
-} as const
+/** Inclusive grid rectangles, loaded from layout.json. */
+export const ZONES = SHARED_ZONES
 
-export type ZoneName = keyof typeof ZONES
+export type ZoneName = SharedZoneName
 
 /** Convert a grid rectangle into a centred floor rect in world units. */
 export function zoneRect(zone: { x0: number; y0: number; x1: number; y1: number }) {
@@ -47,17 +53,15 @@ export function zoneRect(zone: { x0: number; y0: number; x1: number; y1: number 
 }
 
 /**
- * Desk cells on the simulation grid. Mirrors `desk` in
- * `server/src/agents/personas.ts` — keep the two lists in step. Step 4 will
- * make the server map authoritative and this list can go away.
+ * Desk cells on the simulation grid, sourced from shared/src/layout.json (P0.2).
  */
-export const DESK_CELLS = [
-  { x: 5, y: 7 },
-  { x: 12, y: 7 },
-  { x: 20, y: 7 },
-  { x: 28, y: 7 },
-  { x: 35, y: 7 },
-] as const
+export const DESK_LIST = DESK_FURNITURE.map((item) => ({
+  id: item.agentId as string,
+  desk: item.at,
+  seat: item.slots[0]?.stand ?? item.at,
+}))
+
+export const DESK_CELLS = DESK_LIST.map((item) => item.desk)
 
 /** Palette shared by the scene and the HTML chrome, so both feel like one app. */
 export const palette = {
