@@ -39,12 +39,14 @@ export function nearestWalkable(cell: Cell): Cell {
 }
 
 /** Random walkable cell inside a zone, used for idle wandering. */
-export function randomCellIn(zone: ZoneName, random = Math.random): Cell {
+import { random } from './rng'
+
+export function randomCellIn(zone: ZoneName, randomFn: (min?: number, max?: number) => number = random): Cell {
   const rect = ZONES[zone]
   for (let attempt = 0; attempt < 200; attempt += 1) {
     const cell = {
-      x: rect.x0 + Math.floor(random() * (rect.x1 - rect.x0 + 1)),
-      y: rect.y0 + Math.floor(random() * (rect.y1 - rect.y0 + 1)),
+      x: rect.x0 + Math.floor(randomFn() * (rect.x1 - rect.x0 + 1)),
+      y: rect.y0 + Math.floor(randomFn() * (rect.y1 - rect.y0 + 1)),
     }
     if (isWalkable(cell)) return cell
   }

@@ -7,6 +7,7 @@
   body,
   #root {
     height: 100%;
+    overflow: hidden;
   }
 
   body {
@@ -27,6 +28,11 @@
 @layer components {
   .panel {
     @apply rounded-2xl border border-white/10 bg-ink-900/80 shadow-panel backdrop-blur-xl;
+  }
+
+  /* One surface for every floating popup: agent inspector, job tools, board and chrome. */
+  .popup-surface {
+    @apply border border-white/10 bg-ink-900/85 shadow-panel backdrop-blur-xl;
   }
 
   .scroll-thin {

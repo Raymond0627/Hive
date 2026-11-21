@@ -1,8 +1,10 @@
 import type { AgentPreview } from '@hive/shared'
-import { generateJson, generateText, parseTaskResult, GeminiError } from './gemini'
+import { generateJson, generateText, parseTaskResult, GeminiError, getTaskModel, getCheapModel } from './gemini'
 import { getSim } from '../sim/state'
 import { beginTask, endTask } from '../sim/engine'
 import { recordTaskToVault } from '../vault'
+import { logUsage } from '../persistence'
+import { broadcast } from '../ws'
 import {
   addChatMessage,
   completedTasksFor,
@@ -96,14 +98,15 @@ export interface RunTaskResult {
 /**
  * Queue a task, call Gemini, then store the answer and the lesson it produced.
  * The simulation (step 6) will also walk the agent to its desk around this call.
+ *
+ * Step 8 safeguard: one running task per agent — extra requests are queued and
+ * drained in order instead of being rejected.
  */
+const queues = new Map<string, Array<{ task: ReturnType<typeof createTask>; prompt: string }>>()
+
 export async function runAgentTask(agentId: string, prompt: string): Promise<RunTaskResult> {
   const agent = getAgent(agentId)
   if (!agent) throw new TaskError(404, 'Unknown agent.')
-
-  if (running.has(agentId)) {
-    throw new TaskError(409, `${agent.name} is already working on a task.`)
-  }
 
   rollUsageDay()
   const limit = dailyLimit()
@@ -111,7 +114,25 @@ export async function runAgentTask(agentId: string, prompt: string): Promise<Run
     throw new TaskError(429, `Daily Gemini limit reached (${limit} requests). Try again tomorrow.`)
   }
 
+  if (running.has(agentId)) {
+    const task = createTask(agentId, prompt)
+    const queue = queues.get(agentId) ?? []
+    queue.push({ task, prompt })
+    queues.set(agentId, queue)
+    broadcast({ type: 'task_update', task, lessons: [] })
+    return { task, agent }
+  }
+
   const task = createTask(agentId, prompt)
+  return executeTask(agent, task, prompt)
+}
+
+async function executeTask(
+  agent: AgentPreview,
+  task: ReturnType<typeof createTask>,
+  prompt: string,
+): Promise<RunTaskResult> {
+  const agentId = agent.id
   running.add(agentId)
   usageCount += 1
   agent.activity = 'working'
@@ -123,6 +144,7 @@ export async function runAgentTask(agentId: string, prompt: string): Promise<Run
       user: buildUserPrompt(agent, prompt),
       maxOutputTokens: 420,
     })
+    logUsage('task', getTaskModel())
 
     const parsed = parseTaskResult(raw)
     finishTask(task, 'done', parsed.result)
@@ -137,6 +159,7 @@ export async function runAgentTask(agentId: string, prompt: string): Promise<Run
     // Record to Obsidian Second Brain vault (P3.3)
     recordTaskToVault(agent.name, prompt, parsed.result, parsed.lesson)
     endTask(agentId, true)
+    broadcast({ type: 'task_update', task, lessons: [] })
 
     return { task, agent }
   } catch (error) {
@@ -148,11 +171,36 @@ export async function runAgentTask(agentId: string, prompt: string): Promise<Run
       at: task.finishedAt ?? Date.now(),
     })
     endTask(agentId, false)
+    broadcast({ type: 'task_update', task, lessons: [] })
     throw error
   } finally {
     running.delete(agentId)
     agent.activity = 'idle'
+    drainQueue(agentId)
   }
+}
+
+/** Start the next queued task for an agent, if any. */
+function drainQueue(agentId: string): void {
+  const queue = queues.get(agentId)
+  if (!queue || queue.length === 0) return
+  const next = queue.shift()
+  if (!next) return
+  if (queue.length === 0) queues.delete(agentId)
+
+  const agent = getAgent(agentId)
+  if (!agent) return
+
+  rollUsageDay()
+  if (usageCount >= dailyLimit()) {
+    finishTask(next.task, 'failed', 'Daily Gemini limit reached.')
+    broadcast({ type: 'task_update', task: next.task, lessons: [] })
+    return
+  }
+
+  void executeTask(agent, next.task, next.prompt).catch(() => {
+    // executeTask already marked the task failed and broadcast the update.
+  })
 }
 
 /**
@@ -198,6 +246,7 @@ export async function runDirectChat(agentId: string, message: string): Promise<s
       maxOutputTokens: 60,
       temperature: 0.85,
     })
+    logUsage('direct_chat', getCheapModel())
 
     const cleaned = reply.replace(/^["']|["']$/g, '').trim()
     addChatMessage(agentId, 'user', message)

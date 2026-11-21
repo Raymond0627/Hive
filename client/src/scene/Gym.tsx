@@ -1,7 +1,22 @@
+import { useFrame } from '@react-three/fiber'
+import { useRef } from 'react'
 import { palette } from './layout'
 import { Plant } from './Furniture'
+import { useStudioStore } from '../store/useStudioStore'
 
 function Treadmill({ x, z }: { x: number; z: number }) {
+  const beltRef = useRef<any>(null)
+  const live = useStudioStore((state) => state.live)
+  const active = Object.values(live).some(
+    (agent) => agent.slotId?.startsWith('treadmill') && agent.activity !== 'walking',
+  )
+
+  useFrame((_, delta) => {
+    if (beltRef.current && active) {
+      beltRef.current.position.z = (beltRef.current.position.z + delta * 1.6) % 0.4
+    }
+  })
+
   return (
     <group position={[x, 0, z]}>
       {/* Deck */}
@@ -9,7 +24,7 @@ function Treadmill({ x, z }: { x: number; z: number }) {
         <boxGeometry args={[1.35, 0.26, 2.6]} />
         <meshStandardMaterial color={palette.charcoal} roughness={0.7} />
       </mesh>
-      <mesh position={[0, 0.27, 0]}>
+      <mesh ref={beltRef} position={[0, 0.27, 0]}>
         <boxGeometry args={[1, 0.03, 2.2]} />
         <meshStandardMaterial color="#232932" roughness={0.95} />
       </mesh>

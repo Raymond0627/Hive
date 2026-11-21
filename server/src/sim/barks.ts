@@ -21,8 +21,10 @@ const BUBBLE_MS = 4000
 /** Per-agent bubble cooldown so agents don't spam the room. */
 const lastBark = new Map<string, number>()
 
+import { random } from './rng'
+
 function pick<T>(items: T[]): T {
-  return items[Math.floor(Math.random() * items.length)]
+  return items[Math.floor(random() * items.length)]
 }
 
 /** Determine the specific activity category for lines and emotes. */
@@ -81,7 +83,7 @@ export function lineOrEmoteFor(
   if (now - last < COOLDOWN_MS) return null
 
   // 40% complete silence
-  const roll = Math.random()
+  const roll = random()
   if (roll < 0.4) return null
 
   // 35% emote icon instead of text (P2.1)

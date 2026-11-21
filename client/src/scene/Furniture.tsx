@@ -66,9 +66,9 @@ function Desk({ x, z, lit }: { x: number; z: number; lit: boolean }) {
 }
 
 /** Office chair on the camera side of the desk; the agent sits facing the screen. */
-function Chair({ x, z }: { x: number; z: number }) {
+function Chair({ x, z, occupied = false }: { x: number; z: number; occupied?: boolean }) {
   return (
-    <group position={[x, 0, z]} rotation={[0, Math.PI, 0]}>
+    <group position={[x, 0, z + (occupied ? 0.32 : 0)]} rotation={[0, Math.PI, 0]}>
       <mesh position={[0, 0.5, 0]} castShadow>
         <boxGeometry args={[0.66, 0.1, 0.66]} />
         <meshStandardMaterial color={palette.chairSeat} roughness={0.8} />
@@ -198,10 +198,13 @@ export function WorkArea() {
           (agent) =>
             agent.slotId === `desk-${id}` && (agent.animation === 'type' || agent.activity === 'working'),
         )
+        const occupied = Object.values(live).some(
+          (agent) => agent.slotId === `desk-${id}` && agent.activity !== 'walking',
+        )
         return (
           <group key={id}>
             <Desk x={atDesk.x} z={atDesk.z} lit={lit} />
-            <Chair x={chair.x} z={chair.z} />
+            <Chair x={chair.x} z={chair.z} occupied={occupied} />
           </group>
         )
       })}

@@ -15,7 +15,7 @@ function Kbd({ children }: { children: React.ReactNode }) {
 export function ZoneLegend() {
   return (
     <div className="pointer-events-none absolute bottom-0 left-0 z-30 hidden p-4 md:block md:p-5">
-      <div className="pointer-events-auto flex flex-col gap-2.5 rounded-2xl border border-white/10 bg-ink-900/75 px-4 py-3 shadow-panel backdrop-blur-xl">
+      <div className="popup-surface pointer-events-auto flex flex-col gap-2.5 rounded-2xl px-4 py-3">
         <div className="flex items-center gap-4">
           {ZONES.map((zone) => (
             <div key={zone.name} className="flex items-center gap-1.5">

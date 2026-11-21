@@ -5,6 +5,7 @@ import { DESKS, isWalkable } from './map'
 import { SLOTS_BY_ID } from './furniture'
 import { allSims, agents } from './state'
 import { nearestFreeCell } from './occupancy'
+import { seedRng } from './rng'
 
 /**
  * Headless stress run: 20 agents, one simulated day, virtual time.
@@ -14,13 +15,7 @@ import { nearestFreeCell } from './occupancy'
  */
 test('20 agents survive a simulated day without clipping or sticking', () => {
   // Determinism keeps the assertions meaningful between runs.
-  let seed = 42
-  const random = () => {
-    seed = (seed * 1_103_515_245 + 12_345) % 2_147_483_648
-    return seed / 2_147_483_648
-  }
-  const original = Math.random
-  Math.random = random
+  seedRng(42)
 
   agents.clear()
   for (const [id, { workSpot }] of Object.entries(DESKS)) addAgent(id, workSpot)
@@ -87,7 +82,6 @@ test('20 agents survive a simulated day without clipping or sticking', () => {
     }
   }
 
-  Math.random = original
   assert.ok(usedSlot, 'no agent ever used a furniture slot')
   assert.ok(worstStuck < 15_000, `worst stuck time ${worstStuck} ms`)
 })

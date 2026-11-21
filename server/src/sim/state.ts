@@ -49,7 +49,7 @@ export const setTimeScale = (scale: number) => {
 }
 export const getTimeScale = () => timeScale
 
-export const minutesPerSecond = () => Number(process.env.SIM_MINUTES_PER_SECOND ?? 4) * (timeScale === 0 ? 0 : timeScale)
+export const minutesPerSecond = () => Number(process.env.SIM_MINUTES_PER_SECOND ?? 2) * (timeScale === 0 ? 0 : timeScale)
 
 export const clockLabel = () => {
   const m = Math.floor(clock % 1440)

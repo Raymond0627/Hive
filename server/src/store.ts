@@ -1,13 +1,49 @@
 import type { AgentPreview, ChatMessage, LastTask, Task } from '@hive/shared'
-import { STARTER_AGENTS } from './agents/personas'
+import { ROSTER } from './agents/roster'
+import { DESKS } from '@hive/shared'
 import { db } from './db'
+import {
+  ensureAgentRows,
+  insertLesson,
+  insertTask,
+  loadAppearances,
+  loadLessons,
+  loadNeeds,
+  loadPlans,
+  loadTasks,
+  loadTraits,
+  saveAppearance,
+  updateTask,
+} from './persistence'
 
 /**
  * Store with in-memory fast access and SQLite backing.
  */
 
+const ROSTER_AGENTS: AgentPreview[] = ROSTER.map((agent) => {
+  const desk = DESKS[agent.id] ?? { desk: { x: 2, y: 2 }, workSpot: { x: 2, y: 3 } }
+  return {
+    id: agent.id,
+    name: agent.name,
+    role: agent.role,
+    personality: agent.personality,
+    rules: agent.rules,
+    appearance: agent.appearance,
+    desk: desk.desk,
+    activity: agent.status === 'sleeping' ? 'idle' : 'idle',
+    mood: agent.status === 'sleeping' ? 'sleeping' : 'steady',
+    traits: [],
+    needs: { energy: 80, hunger: 70, social: 60, fun: 70 },
+    lessons: [],
+    lastTask: null,
+    status: agent.status,
+    pendingDesk: !DESKS[agent.id],
+    roleNote: agent.role === 'Producer' ? 'mostly code' : undefined,
+  }
+})
+
 const agents = new Map<string, AgentPreview>(
-  STARTER_AGENTS.map((agent) => [
+  ROSTER_AGENTS.map((agent) => [
     agent.id,
     {
       ...structuredClone(agent),
@@ -20,8 +56,38 @@ const agents = new Map<string, AgentPreview>(
 const tasks: Task[] = []
 let nextTaskId = 1
 
-// Hydrate relationships and chats from SQLite on boot
+// Hydrate SQLite into memory on boot (step 8). The database is the long-term
+// memory: identities/appearance, task history, lessons, positions, chats.
 try {
+  ensureAgentRows(ROSTER_AGENTS)
+
+  for (const [id, appearance] of loadAppearances()) {
+    const agent = agents.get(id)
+    if (agent) agent.appearance = appearance
+  }
+
+  const storedNeeds = loadNeeds()
+  for (const [id, needs] of storedNeeds) {
+    const agent = agents.get(id)
+    if (agent) agent.needs = needs
+  }
+
+  const storedTraits = loadTraits()
+  for (const [id, traits] of storedTraits) {
+    const agent = agents.get(id)
+    if (agent && Array.isArray(traits) && traits.length > 0) agent.traits = traits as AgentPreview['traits']
+  }
+
+  for (const lesson of loadLessons()) {
+    const agent = agents.get(lesson.agentId)
+    if (!agent || agent.lessons.includes(lesson.text)) continue
+    agent.lessons = [...agent.lessons, lesson.text].slice(-12)
+  }
+
+  const storedTasks = loadTasks()
+  tasks.push(...storedTasks)
+  nextTaskId = storedTasks.reduce((max, task) => Math.max(max, task.id), 0) + 1
+
   const relRows = db
     .prepare('SELECT agent_id, other_id, note FROM relationships')
     .all() as Array<{ agent_id: string; other_id: string; note: string }>
@@ -81,6 +147,7 @@ export function createTask(agentId: string, prompt: string): Task {
   }
   nextTaskId += 1
   tasks.push(task)
+  insertTask(task)
   return task
 }
 
@@ -95,12 +162,23 @@ export function finishTask(task: Task, status: 'done' | 'failed', result: string
   task.status = status
   task.result = result
   task.finishedAt = Date.now()
+  updateTask(task)
 }
 
-/** Keep a bounded memory: newest last, oldest evicted. */
+/** Keep a bounded memory: newest last, oldest evicted. Writes through to SQLite. */
 export function rememberLesson(agent: AgentPreview, text: string): void {
   const cap = 12
   agent.lessons = [...agent.lessons, text].slice(-cap)
+  insertLesson(agent.id, text, Date.now())
+}
+
+/** Customizer write-through: the model, the panel and the database agree. */
+export function setAgentAppearance(agentId: string, appearance: AgentPreview['appearance']): boolean {
+  const agent = agents.get(agentId)
+  if (!agent) return false
+  agent.appearance = appearance
+  saveAppearance(agentId, appearance)
+  return true
 }
 
 export function rememberLastTask(agent: AgentPreview, lastTask: LastTask): void {

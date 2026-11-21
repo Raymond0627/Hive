@@ -9,7 +9,7 @@ import { useStudioStore } from '../store/useStudioStore'
 type Vec3 = [number, number, number]
 
 /** Server snapshot interval (ms). Position is interpolated across this window. */
-const TICK_MS = 105
+const TICK_MS = 150
 /** Radians of walk cycle per world unit travelled, so feet never slide. */
 const PHASE_PER_UNIT = 6.2
 

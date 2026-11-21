@@ -48,6 +48,45 @@ export interface GenerateTextInput {
   temperature?: number
 }
 
+export interface VisionImage {
+  mimeType: 'image/jpeg' | 'image/png' | 'image/webp'
+  data: string
+}
+
+/** Text generation with selected extracted frames attached as Gemini vision input. */
+export async function generateVisionText(input: GenerateTextInput & { images: VisionImage[] }): Promise<string> {
+  const apiKey = process.env.GEMINI_API_KEY?.trim()
+  if (!apiKey) throw new GeminiError('GEMINI_API_KEY is not set on the server. Add it to .env and restart.', 500)
+  const model = input.model?.trim() || getCheapModel()
+  const url = `${API_BASE}/models/${encodeURIComponent(model)}:generateContent`
+  const body = JSON.stringify({
+    systemInstruction: { parts: [{ text: input.system }] },
+    contents: [{ role: 'user', parts: [
+      { text: input.user },
+      ...input.images.map((image) => ({ inlineData: { mimeType: image.mimeType, data: image.data } })),
+    ] }],
+    generationConfig: { temperature: input.temperature ?? 0.2, maxOutputTokens: input.maxOutputTokens ?? 1000 },
+  })
+  let lastError: unknown = new GeminiError('Gemini request failed.')
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      const response = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey }, body, signal: AbortSignal.timeout(input.timeoutMs ?? 45_000) })
+      if (!response.ok) throw new GeminiError(readError(await response.text().catch(() => ''), `Gemini returned HTTP ${response.status}.`), response.status)
+      const data = (await response.json()) as GeminiResponse
+      const text = data.candidates?.[0]?.content?.parts?.map((part) => part.text ?? '').join('').trim() ?? ''
+      if (!text) throw new GeminiError(data.promptFeedback?.blockReason ? `Gemini blocked the prompt (${data.promptFeedback.blockReason}).` : 'Gemini returned an empty response.')
+      return text
+    } catch (error) {
+      lastError = error
+      const status = error instanceof GeminiError ? error.status : 0
+      if ((!status && attempt < 2) || RETRYABLE.has(status) && attempt < 2) await sleep(600 * 2 ** attempt)
+      else break
+    }
+  }
+  if (lastError instanceof GeminiError) throw lastError
+  throw new GeminiError('Could not reach the Gemini API.', 502)
+}
+
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }

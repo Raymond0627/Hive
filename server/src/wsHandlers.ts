@@ -1,11 +1,24 @@
-import type { ClientMessage } from '@hive/shared'
+import type { Appearance, ClientMessage } from '@hive/shared'
 import { broadcast } from './ws'
 import { getSim, setTimeScale, getTimeScale } from './sim/state'
 import { nearestFreeCell } from './sim/occupancy'
 import { releaseAgentSlots } from './sim/slots'
 import { setConversationsEnabled } from './sim/conversation'
 import { runDirectChat } from './agents/agentService'
-import { addChatMessage } from './store'
+import { addChatMessage, getAgent, setAgentAppearance } from './store'
+
+const HEX = /^#[0-9a-fA-F]{6}$/
+
+/** Only accept complete, well-formed voxel palettes from the browser. */
+function safeAppearance(input: Appearance | undefined, current: Appearance): Appearance {
+  const keys = ['skin', 'hair', 'shirt', 'pants', 'shoes'] as const
+  const next = { ...current }
+  for (const key of keys) {
+    const candidate = input?.[key]
+    if (typeof candidate === 'string' && HEX.test(candidate)) next[key] = candidate
+  }
+  return next
+}
 
 export function handleClientMessage(raw: string): void {
   let message: ClientMessage
@@ -61,6 +74,15 @@ export function handleClientMessage(raw: string): void {
         broadcast({ type: 'chat_message', agentId, message: fallback })
       }
     })()
+    return
+  }
+
+  if (message.type === 'update_appearance') {
+    const agent = getAgent(message.agentId)
+    if (!agent) return
+    const appearance = safeAppearance(message.appearance, agent.appearance)
+    if (!setAgentAppearance(agent.id, appearance)) return
+    broadcast({ type: 'agent_appearance', agentId: agent.id, appearance })
     return
   }
 

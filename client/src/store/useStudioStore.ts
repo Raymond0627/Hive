@@ -6,12 +6,22 @@ import type {
   AgentNeeds,
   AgentPreview,
   AgentTrait,
+  Appearance,
   ChatMessage,
   PlanBlock,
   Relationship,
   ServerMessage,
   Task,
+  Job,
+  JobEvent,
 } from '@hive/shared'
+
+/** Daily Gemini budget reported by `GET /api/usage` (step 10). */
+export interface GeminiUsage {
+  day: string
+  used: number
+  limit: number
+}
 
 type BackendStatus = 'connecting' | 'online' | 'offline'
 
@@ -82,6 +92,13 @@ interface StudioState {
   conversationsEnabled: boolean
   toggleConversations: () => void
 
+  /** Daily Gemini budget, refreshed after every task/chat (step 10). */
+  usage: GeminiUsage | null
+  loadUsage: () => Promise<void>
+
+  /** Optimistic appearance update while the server broadcast is in flight. */
+  applyAppearance: (agentId: string, appearance: Appearance) => void
+
   /** Fetch the starter agents; safe to call repeatedly (retry loop). */
   loadAgents: () => Promise<void>
   selectAgent: (id: string | null) => void
@@ -113,6 +130,9 @@ interface StudioState {
   loadDebugMap: () => Promise<void>
 
   applyServerMessage: (message: ServerMessage) => void
+  jobUpdates: Record<string, Job>
+  pipelineEvents: JobEvent[]
+  notifications: string[]
 }
 
 export const useStudioStore = create<StudioState>((set, get) => ({
@@ -136,6 +156,10 @@ export const useStudioStore = create<StudioState>((set, get) => ({
   conversationsEnabled: true,
   vaultNotes: {},
   relationshipsDetailed: {},
+  usage: null,
+  jobUpdates: {},
+  pipelineEvents: [],
+  notifications: [],
 
   loadVaultNote: async (agentId: string) => {
     try {
@@ -177,6 +201,25 @@ export const useStudioStore = create<StudioState>((set, get) => ({
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ enabled: next }),
     })
+  },
+
+  loadUsage: async () => {
+    try {
+      const res = await fetch('/api/usage')
+      if (!res.ok) return
+      const data = (await res.json()) as GeminiUsage
+      set({ usage: data })
+    } catch {
+      // ignore
+    }
+  },
+
+  applyAppearance: (agentId, appearance) => {
+    set((state) => ({
+      agents: state.agents.map((agent) =>
+        agent.id === agentId ? { ...agent, appearance } : agent,
+      ),
+    }))
   },
 
   loadChatHistory: async (agentId: string) => {
@@ -223,6 +266,7 @@ export const useStudioStore = create<StudioState>((set, get) => ({
       })
       if (!res.ok) {
         set({ chatSending: false })
+        void get().loadUsage()
         return false
       }
       const data = (await res.json()) as { userMsg: ChatMessage; agentMsg: ChatMessage }
@@ -236,6 +280,7 @@ export const useStudioStore = create<StudioState>((set, get) => ({
           },
         }
       })
+      void get().loadUsage()
       return true
     } catch {
       set({ chatSending: false })
@@ -274,6 +319,7 @@ export const useStudioStore = create<StudioState>((set, get) => ({
       if (!res.ok) throw new Error(`GET /api/agents -> ${res.status}`)
       const data = (await res.json()) as { agents: AgentPreview[] }
       set({ agents: data.agents, backend: 'online', loading: false })
+      void get().loadUsage()
     } catch {
       set({ backend: 'offline', loading: false })
     }
@@ -301,6 +347,7 @@ export const useStudioStore = create<StudioState>((set, get) => ({
             ? data.error
             : `The task failed (HTTP ${res.status}).`
         set({ sendingTaskFor: null, taskError: message })
+        void get().loadUsage()
         return false
       }
 
@@ -312,6 +359,7 @@ export const useStudioStore = create<StudioState>((set, get) => ({
         sendingTaskFor: null,
         taskError: null,
       }))
+      void get().loadUsage()
       return true
     } catch {
       set({
@@ -411,6 +459,17 @@ export const useStudioStore = create<StudioState>((set, get) => ({
       return
     }
 
+    if (message.type === 'task_update') {
+      set(
+        message.task.status === 'failed'
+          ? { taskError: message.task.result ?? 'That task failed. Check the server log for details.' }
+          : {},
+      )
+      void get().loadAgents()
+      void get().loadUsage()
+      return
+    }
+
     if (message.type === 'chat_message') {
       const history = get().chatMessages[message.agentId] ?? []
       if (!history.some((m) => m.id === message.message.id)) {
@@ -424,6 +483,15 @@ export const useStudioStore = create<StudioState>((set, get) => ({
       return
     }
 
+    if (message.type === 'agent_appearance') {
+      set((state) => ({
+        agents: state.agents.map((agent) =>
+          agent.id === message.agentId ? { ...agent, appearance: message.appearance } : agent,
+        ),
+      }))
+      return
+    }
+
     if (message.type === 'conversation_update') {
       set({ activeConversation: message.conversation })
       return
@@ -431,6 +499,24 @@ export const useStudioStore = create<StudioState>((set, get) => ({
 
     if (message.type === 'sim_speed') {
       set({ timeScale: message.speed })
+      return
+    }
+
+    if (message.type === 'job_update') {
+      set((state) => ({ jobUpdates: { ...state.jobUpdates, [message.job.id]: message.job } }))
+      return
+    }
+
+    if (message.type === 'stage_event') {
+      set((state) => ({
+        jobUpdates: { ...state.jobUpdates, [message.job.id]: message.job },
+        pipelineEvents: [...state.pipelineEvents, message.event].slice(-100),
+      }))
+      return
+    }
+
+    if (message.type === 'notification') {
+      set((state) => ({ notifications: [...state.notifications, message.text].slice(-5) }))
     }
   },
 }))

@@ -9,6 +9,7 @@ import type { Relationship } from '@hive/shared'
 import { db } from '../db'
 import { getAgent } from '../store'
 import { allSims, getSim } from './state'
+import { random } from './rng'
 
 const clampAffinity = (v: number) => Math.max(-100, Math.min(100, Math.round(v)))
 
@@ -122,7 +123,7 @@ export function maybeInviteColleague(
 
   // Introverts with low social desire may prefer solo meals
   const isIntrovert = inviterAgent.traits?.includes('introvert')
-  if (isIntrovert && Math.random() < 0.6) return null
+  if (isIntrovert && random() < 0.6) return null
 
   // Find candidate colleagues who are free
   const candidates = allSims()

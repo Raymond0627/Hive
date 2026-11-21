@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import type { AgentActivity, Appearance } from '@hive/shared'
 import { useStudioStore } from '../store/useStudioStore'
+import { sendMessage } from '../net/socket'
 
 const ACTIVITY: Record<AgentActivity, { label: string; dot: string; text: string }> = {
   idle: { label: 'Idle', dot: 'bg-slate-400', text: 'text-slate-300' },
@@ -11,11 +12,12 @@ const ACTIVITY: Record<AgentActivity, { label: string; dot: string; text: string
 }
 
 const TASK_HINTS: Record<string, string> = {
-  Researcher: 'Find three sources on office acoustics.',
-  Analyst: "Compare last month's numbers to this one.",
-  Writer: 'Draft a two-line announcement for the team.',
-  Strategist: 'Tell me what to cut to hit the deadline.',
-  Coordinator: 'Turn this mess into an ordered checklist.',
+  Scout: 'Research this product and list only sourced claims.',
+  QA: 'Review this video against the deterministic checklist.',
+  Planner: 'Turn this product into a 15–20 second faceless brief.',
+  Editor: 'Prepare an edit checklist when the video API is enabled.',
+  Publisher: 'Prepare the human posting checklist for this job.',
+  Producer: 'Turn this pipeline update into an ordered handoff.',
 }
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
@@ -99,9 +101,13 @@ export function AgentPanel() {
   const loadVaultNote = useStudioStore((state) => state.loadVaultNote)
   const relationshipsDetailed = useStudioStore((state) => state.relationshipsDetailed)
   const loadRelationships = useStudioStore((state) => state.loadRelationships)
+  const usage = useStudioStore((state) => state.usage)
+  const applyAppearance = useStudioStore((state) => state.applyAppearance)
 
   const [tab, setTab] = useState<'overview' | 'chat' | 'brain'>('overview')
   const [chatDraft, setChatDraft] = useState('')
+  const [appearanceDraft, setAppearanceDraft] = useState<Appearance | null>(null)
+  const [appearanceSaved, setAppearanceSaved] = useState(false)
   const chatScrollRef = useRef<HTMLDivElement>(null)
 
   // Keep the last agent rendered while the panel slides out.
@@ -125,9 +131,14 @@ export function AgentPanel() {
   const open = Boolean(selectedId && agent)
   const busy = Boolean(agent && sendingTaskFor === agent.id)
   const activity = busy ? ACTIVITY.working : agent ? ACTIVITY[agent.activity] : ACTIVITY.idle
+  const limitReached = Boolean(usage && usage.limit > 0 && usage.used >= usage.limit)
 
   const [draft, setDraft] = useState('')
   const scrollRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (agent) setAppearanceDraft(agent.appearance)
+  }, [agent?.id, agent?.appearance])
 
   useEffect(() => {
     setDraft('')
@@ -152,7 +163,7 @@ export function AgentPanel() {
   }, [messages.length, tab, chatSending])
 
   const submit = async () => {
-    if (!agent || !draft.trim() || busy) return
+    if (!agent || !draft.trim() || busy || limitReached) return
     const ok = await sendTask(agent.id, draft.trim())
     if (ok) {
       setDraft('')
@@ -161,10 +172,19 @@ export function AgentPanel() {
   }
 
   const submitChat = async () => {
-    if (!agent || !chatDraft.trim() || chatSending) return
+    if (!agent || !chatDraft.trim() || chatSending || limitReached) return
     const text = chatDraft.trim()
     setChatDraft('')
     await sendDirectChat(agent.id, text)
+  }
+
+  /** Step 10: optimistic repaint + write-through to SQLite via the server. */
+  const applyLook = () => {
+    if (!agent || !appearanceDraft) return
+    applyAppearance(agent.id, appearanceDraft)
+    sendMessage({ type: 'update_appearance', agentId: agent.id, appearance: appearanceDraft })
+    setAppearanceSaved(true)
+    window.setTimeout(() => setAppearanceSaved(false), 1600)
   }
 
   return (
@@ -174,7 +194,7 @@ export function AgentPanel() {
         open ? 'translate-x-0' : 'pointer-events-none translate-x-[110%]'
       }`}
     >
-      <div className="pointer-events-auto flex min-h-0 w-full flex-col overflow-hidden rounded-2xl border border-white/10 bg-ink-900/85 shadow-panel backdrop-blur-2xl">
+      <div className="popup-surface pointer-events-auto flex min-h-0 w-full flex-col overflow-hidden rounded-2xl">
         {agent && (
           <>
             <div className="flex items-start gap-3 border-b border-white/5 px-5 pb-4 pt-5">
@@ -652,12 +672,16 @@ export function AgentPanel() {
                   />
                   <div className="flex items-center justify-between gap-2 px-1 pt-1">
                     <span className="text-[10px] text-ink-400">
-                      {busy ? 'Gemini is thinking…' : 'Gemini · live'}
+                      {limitReached
+                        ? 'Daily Gemini limit reached'
+                        : busy
+                          ? 'Gemini is thinking…'
+                          : 'Gemini · live'}
                     </span>
                     <button
                       type="button"
                       onClick={() => void submit()}
-                      disabled={!draft.trim() || busy}
+                      disabled={!draft.trim() || busy || limitReached}
                       className="rounded-lg bg-accent px-3 py-1.5 text-[11px] font-semibold text-ink-900 transition hover:bg-accent-soft disabled:cursor-not-allowed disabled:bg-ink-500 disabled:text-ink-300"
                     >
                       {busy ? 'Thinking…' : 'Send'}
@@ -669,33 +693,55 @@ export function AgentPanel() {
                     {taskError}
                   </p>
                 )}
+                {limitReached && usage && (
+                  <p className="mt-2 rounded-lg border border-amber-400/20 bg-amber-500/10 px-2.5 py-2 text-[11px] leading-relaxed text-amber-200">
+                    The office has used {usage.used} of {usage.limit} Gemini requests today.
+                    Tasks resume after the daily reset.
+                  </p>
+                )}
               </section>
 
               <section>
                 <SectionLabel>Appearance</SectionLabel>
                 <div className="grid grid-cols-5 gap-2">
                   {(['skin', 'hair', 'shirt', 'pants', 'shoes'] as const).map((key) => (
-                    <div key={key} className="space-y-1">
-                      <div
-                        className="h-6 rounded-md border border-white/10"
-                        style={{ backgroundColor: agent.appearance[key] }}
+                    <label key={key} className="cursor-pointer space-y-1">
+                      <input
+                        type="color"
+                        aria-label={`${agent.name} ${key} colour`}
+                        value={(appearanceDraft ?? agent.appearance)[key]}
+                        onChange={(event) => {
+                          const value = event.target.value
+                          setAppearanceDraft((draft) => ({
+                            ...(draft ?? agent.appearance),
+                            [key]: value,
+                          }))
+                        }}
+                        className="h-7 w-full cursor-pointer rounded-md border border-white/10 bg-transparent p-0 [&::-webkit-color-swatch-wrapper]:p-0.5 [&::-webkit-color-swatch]:rounded [&::-webkit-color-swatch]:border-0"
                       />
                       <p className="text-center text-[9px] uppercase tracking-wide text-ink-400">
                         {key}
                       </p>
-                    </div>
+                    </label>
                   ))}
                 </div>
-                <p className="mt-2 text-[10px] text-ink-400">
-                  Saved per agent. The customizer edits these in step 10.
-                </p>
+                <div className="mt-2 flex items-center justify-between gap-2">
+                  <p className="text-[10px] text-ink-400">Saved per agent in SQLite.</p>
+                  <button
+                    type="button"
+                    onClick={applyLook}
+                    className="rounded-lg border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] font-semibold text-ink-100 transition hover:border-accent/40 hover:text-white"
+                  >
+                    {appearanceSaved ? 'Saved ✓' : 'Apply look'}
+                  </button>
+                </div>
               </section>
             </div>
             )}
 
             <div className="border-t border-white/5 px-5 py-3">
               <p className="text-[10px] text-ink-400">
-                Results and lessons live in memory until SQLite lands in step 8
+                Tasks, lessons, chats and looks persist in SQLite across restarts
               </p>
             </div>
           </>

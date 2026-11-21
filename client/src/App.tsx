@@ -3,12 +3,29 @@ import { Canvas } from '@react-three/fiber'
 import { OfficeScene } from './scene/OfficeScene'
 import { TopBar } from './ui/TopBar'
 import { AgentPanel } from './ui/AgentPanel'
-import { ZoneLegend } from './ui/ZoneLegend'
+import { JobBoard } from './ui/JobBoard'
 import { useStudioStore } from './store/useStudioStore'
 import { connectSocket } from './net/socket'
 
+function FloatingDock() {
+  const agents = useStudioStore((state) => state.agents)
+  const selectedAgentId = useStudioStore((state) => state.selectedAgentId)
+  const selectAgent = useStudioStore((state) => state.selectAgent)
+  return (
+    <nav aria-label="Hive panels" className="pointer-events-auto absolute bottom-4 left-4 z-40 flex flex-col items-center gap-2">
+      <button type="button" aria-label="Toggle Pipeline Board" title="Pipeline Board" onClick={() => window.dispatchEvent(new Event('hive:toggle-job-board'))} className="popup-surface flex h-12 w-12 items-center justify-center rounded-2xl text-accent-soft transition hover:border-accent/50 hover:bg-ink-800">
+        <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="M5 6.5h14M5 12h14M5 17.5h9" strokeLinecap="round" /><path d="M3.5 3.5h17v17h-17z" opacity=".28" /></svg>
+      </button>
+      <button type="button" aria-label="Open Character Info" title="Character Info" onClick={() => selectAgent(selectedAgentId ?? agents[0]?.id ?? null)} className="popup-surface flex h-12 w-12 items-center justify-center rounded-2xl text-accent-soft transition hover:border-accent/50 hover:bg-ink-800">
+        <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><circle cx="12" cy="8" r="3" /><path d="M6.5 19c.6-3.1 2.4-4.7 5.5-4.7s4.9 1.6 5.5 4.7" strokeLinecap="round" /><path d="M3.5 3.5h17v17h-17z" opacity=".28" /></svg>
+      </button>
+    </nav>
+  )
+}
+
 export default function App() {
   const loadAgents = useStudioStore((state) => state.loadAgents)
+  const loadUsage = useStudioStore((state) => state.loadUsage)
   const selectAgent = useStudioStore((state) => state.selectAgent)
   const backend = useStudioStore((state) => state.backend)
   const agentCount = useStudioStore((state) => state.agents.length)
@@ -28,12 +45,13 @@ export default function App() {
     }
 
     void tick()
+    void loadUsage()
     connectSocket()
     return () => {
       cancelled = true
       if (timer) window.clearTimeout(timer)
     }
-  }, [loadAgents])
+  }, [loadAgents, loadUsage])
 
   // Distinguish a click-to-deselect from a camera drag.
   const pressPoint = useRef<{ x: number; y: number } | null>(null)
@@ -66,8 +84,9 @@ export default function App() {
       <div className="pointer-events-none absolute inset-0 z-10 bg-[radial-gradient(ellipse_at_center,transparent_48%,rgba(0,0,0,0.5)_100%)]" />
 
       <TopBar />
-      <ZoneLegend />
+      <FloatingDock />
       <AgentPanel />
+      <JobBoard />
 
       {backend === 'offline' && agentCount === 0 && (
         <div className="pointer-events-none absolute inset-0 z-10 grid place-items-center px-6">

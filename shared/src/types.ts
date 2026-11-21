@@ -167,6 +167,12 @@ export interface AgentPreview extends Agent {
   relationshipsDetailed?: Record<string, Relationship>
   /** In-character direct chat history (P2.3). */
   chatHistory?: ChatMessage[]
+  /** Pipeline roster status (TikTok office Phase 1). Brod sleeps in Phase 1. */
+  status?: 'active' | 'sleeping'
+  /** True if the agent has no 3D desk yet (office rebuild pending, Tier C). */
+  pendingDesk?: boolean
+  /** Short role note shown in the panel, e.g. "mostly code". */
+  roleNote?: string
 }
 
 /** Per-tick mutable state of an agent. */
@@ -256,6 +262,11 @@ export type ServerMessage =
       clock?: number
     }
   | {
+      type: 'agent_appearance'
+      agentId: string
+      appearance: Appearance
+    }
+  | {
       type: 'task_update'
       task: Task
       /** Lessons added by this task, if any. */
@@ -272,6 +283,20 @@ export type ServerMessage =
     }
   | { type: 'sim_speed'; speed: number }
   | { type: 'error'; message: string }
+  // ── TikTok Content Office (Phase 1) pipeline messages ──
+  | {
+      type: 'job_update'
+      job: import('./pipeline').Job
+    }
+  | {
+      type: 'stage_event'
+      event: import('./pipeline').JobEvent
+      job: import('./pipeline').Job
+    }
+  | {
+      type: 'notification'
+      text: string
+    }
 
 export type ClientMessage =
   | { type: 'drag_agent'; agentId: string; x: number; y: number }

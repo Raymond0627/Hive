@@ -3,10 +3,13 @@ import './env'
 import Fastify from 'fastify'
 import cors from '@fastify/cors'
 import websocket from '@fastify/websocket'
+import multipart from '@fastify/multipart'
+import { createReadStream } from 'node:fs'
+import { extname } from 'node:path'
 import { runAgentTask, runDirectChat, geminiUsage, TaskError } from './agents/agentService'
 import { GeminiError } from './agents/gemini'
 import { listAgents, getChatHistory, getRelationshipNotes, addChatMessage } from './store'
-import { addClient, removeClient, clientCount } from './ws'
+import { addClient, removeClient, clientCount, broadcast } from './ws'
 import { snapshots } from './sim/snapshot'
 import { startSim } from './sim/loop'
 import { handleClientMessage } from './wsHandlers'
@@ -18,6 +21,24 @@ import {
 } from './sim/conversation'
 import { initVault, getAgentVaultNote, getVaultPath } from './vault'
 import { initRelationships, getAgentRelationships } from './sim/relationships'
+import { createJob, listJobs, getJob, transition, cancelJob, deleteCancelledJob } from './producer/stateMachine'
+import { onJobEvent } from './producer/bus'
+import {
+  buildJobDetail,
+  intakeProduct,
+  storeProductImage,
+  uploadVideo,
+  normalizeLatestVideo,
+  runQA,
+  generatePostKit,
+  scheduleJob,
+  markJobPosted,
+  afterTransitionTo,
+  researchProductWithGemini,
+} from './producer/stages'
+import { getSettings, setSettings } from './settings'
+import { jobDir, safeJobPath, streamToFile, sanitizeFileName, maxUploadBytes, VIDEO_EXTENSIONS, VIDEO_MIME_TYPES, IMAGE_EXTENSIONS, IMAGE_MIME_TYPES } from './media/storage'
+import { imageInfo } from './media/imageInfo'
 
 const PORT = Number(process.env.PORT ?? 8787)
 const HOST = process.env.HOST ?? '0.0.0.0'
@@ -33,6 +54,12 @@ await app.register(cors, {
 })
 
 await app.register(websocket)
+await app.register(multipart, { limits: { fileSize: maxUploadBytes(), files: 1 } })
+
+onJobEvent((event, job) => {
+  broadcast({ type: 'stage_event', event, job })
+  broadcast({ type: 'job_update', job })
+})
 
 /** Live channel: snapshot on connect, then 10 Hz agent updates. */
 app.get('/ws', { websocket: true }, (socket) => {
@@ -47,7 +74,7 @@ app.get('/api/health', async () => ({
   ok: true,
   name: 'hive',
   phase: 1,
-  steps: [1, 2, 3, 9],
+  steps: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
   geminiConfigured: Boolean(process.env.GEMINI_API_KEY),
   model: MODEL,
   usage: geminiUsage(),
@@ -62,6 +89,170 @@ app.get('/api/agents', async () => ({ agents: listAgents() }))
 
 /** How much of the daily Gemini budget is left. */
 app.get('/api/usage', async () => geminiUsage())
+
+/** TikTok Content Office: jobs. */
+app.get('/api/jobs', async () => ({ jobs: listJobs() }))
+
+app.get<{ Params: { id: string } }>('/api/jobs/:id', async (request, reply) => {
+  const detail = buildJobDetail(request.params.id)
+  if (!detail) return reply.code(404).send({ error: 'Unknown job.' })
+  return detail
+})
+
+app.post<{ Body: { title?: string } }>('/api/jobs', async (request, reply) => {
+  const title = request.body?.title?.trim()
+  if (!title) return reply.code(400).send({ error: 'title is required.' })
+  const job = createJob(title)
+  return { job }
+})
+
+app.post<{ Params: { id: string }; Body: { to?: string; note?: string } }>(
+  '/api/jobs/:id/transition',
+  async (request, reply) => {
+    const to = request.body?.to as never
+    const job = getJob(request.params.id)
+    if (!job) return reply.code(404).send({ error: 'Unknown job.' })
+    try {
+      const updated = transition(request.params.id, to, 'boss', request.body?.note)
+      await afterTransitionTo(request.params.id, to)
+      return { job: updated }
+    } catch (error) {
+      return reply.code(400).send({ error: (error as Error).message })
+    }
+  },
+)
+
+app.post<{ Params: { id: string }; Body: { title?: string; category?: string; sourceUrl?: string; text?: string } }>(
+  '/api/jobs/:id/product', async (request, reply) => {
+    try {
+      const body = request.body ?? {}
+      const product = intakeProduct(request.params.id, {
+        title: body.title?.trim() ?? '',
+        category: (body.category ?? 'other') as never,
+        sourceUrl: body.sourceUrl?.trim() || null,
+        text: body.text ?? '',
+      })
+      return { job: product }
+    } catch (error) { return reply.code(400).send({ error: (error as Error).message }) }
+  },
+)
+
+app.post<{ Params: { id: string }; Body: { title?: string; sourceUrl?: string; listingText?: string } }>(
+  '/api/jobs/:id/research', async (request, reply) => {
+    try {
+      const body = request.body ?? {}
+      return await researchProductWithGemini(request.params.id, {
+        title: body.title?.trim() ?? '',
+        sourceUrl: body.sourceUrl?.trim() || null,
+        listingText: body.listingText ?? '',
+      })
+    } catch (error) {
+      const status = (error as { status?: number }).status
+      return reply.code(status && status >= 400 ? status : 400).send({ error: (error as Error).message })
+    }
+  },
+)
+
+app.post<{ Params: { id: string } }>('/api/jobs/:id/images', async (request, reply) => {
+  try {
+    const part = await request.file()
+    if (!part) return reply.code(400).send({ error: 'An image file is required.' })
+    const ext = extname(part.filename).slice(1).toLowerCase()
+    if (!IMAGE_EXTENSIONS.has(ext) || !IMAGE_MIME_TYPES.has(part.mimetype)) return reply.code(400).send({ error: 'Image must be JPG, PNG or WebP with a matching MIME type.' })
+    const name = `${Date.now()}-${sanitizeFileName(part.filename)}`
+    const relative = `images/${name}`
+    const target = safeJobPath(request.params.id, relative)
+    await streamToFile(part.file, target)
+    const info = imageInfo(target)
+    if (!info) return reply.code(400).send({ error: 'The uploaded file is not a readable JPG, PNG or WebP image.' })
+    const sourceField = part.fields.source
+    const source = sourceField && !Array.isArray(sourceField) && typeof sourceField.value === 'string'
+      ? sourceField.value
+      : 'boss-upload'
+    const image = storeProductImage(request.params.id, name, info, source)
+    return { image }
+  } catch (error) { return reply.code(400).send({ error: (error as Error).message }) }
+})
+
+app.post<{ Params: { id: string } }>('/api/jobs/:id/video', async (request, reply) => {
+  try {
+    const part = await request.file()
+    if (!part) return reply.code(400).send({ error: 'A video file is required.' })
+    const ext = extname(part.filename).slice(1).toLowerCase()
+    if (!VIDEO_EXTENSIONS.has(ext) || !VIDEO_MIME_TYPES.has(part.mimetype)) return reply.code(400).send({ error: 'Video must be MP4 or MOV with a matching MIME type.' })
+    const existing = buildJobDetail(request.params.id)?.video?.version ?? 0
+    const version = existing + 1
+    const name = `v${version}.${ext}`
+    const relative = `video/${name}`
+    await streamToFile(part.file, safeJobPath(request.params.id, relative))
+    const result = await uploadVideo(request.params.id, relative, part.filename, version)
+    return result
+  } catch (error) { return reply.code(400).send({ error: (error as Error).message }) }
+})
+
+app.post<{ Params: { id: string } }>('/api/jobs/:id/normalize', async (request, reply) => {
+  try { return await normalizeLatestVideo(request.params.id) }
+  catch (error) { return reply.code(400).send({ error: (error as Error).message }) }
+})
+
+app.post<{ Params: { id: string }; Body: { verdict?: 'pass' | 'fixable' | 'reject' } }>('/api/jobs/:id/qa', async (request, reply) => {
+  try { return await runQA(request.params.id, request.body?.verdict) }
+  catch (error) { return reply.code(400).send({ error: (error as Error).message }) }
+})
+
+app.post<{ Params: { id: string } }>('/api/jobs/:id/approve-product', async (request, reply) => {
+  try { return { job: transition(request.params.id, 'product_ready', 'boss', 'Product approved (G1)') } }
+  catch (error) { return reply.code(400).send({ error: (error as Error).message }) }
+})
+
+app.post<{ Params: { id: string } }>('/api/jobs/:id/post-kit', async (request, reply) => {
+  try { return { job: await generatePostKit(request.params.id) } }
+  catch (error) { return reply.code(400).send({ error: (error as Error).message }) }
+})
+
+app.post<{ Params: { id: string }; Body: { at?: number } }>('/api/jobs/:id/schedule', async (request, reply) => {
+  try { return { job: scheduleJob(request.params.id, Number(request.body?.at)) } }
+  catch (error) { return reply.code(400).send({ error: (error as Error).message }) }
+})
+
+app.post<{ Params: { id: string }; Body: { url?: string } }>('/api/jobs/:id/mark-posted', async (request, reply) => {
+  try { return { job: markJobPosted(request.params.id, request.body?.url ?? '') } }
+  catch (error) { return reply.code(400).send({ error: (error as Error).message }) }
+})
+
+app.get<{ Params: { id: string; '*': string } }>('/api/jobs/:id/media/*', async (request, reply) => {
+  try {
+    const rel = request.params['*']
+    const path = safeJobPath(request.params.id, rel)
+    return reply.type('application/octet-stream').send(createReadStream(path))
+  } catch { return reply.code(404).send({ error: 'Media file not found.' }) }
+})
+
+app.get('/api/settings', async () => getSettings())
+app.put<{ Body: Record<string, unknown> }>('/api/settings', async (request) => setSettings(request.body ?? {}))
+
+app.post<{ Params: { id: string }; Body: { reason?: string } }>(
+  '/api/jobs/:id/cancel',
+  async (request, reply) => {
+    const job = getJob(request.params.id)
+    if (!job) return reply.code(404).send({ error: 'Unknown job.' })
+    try {
+      const updated = cancelJob(request.params.id, request.body?.reason ?? 'cancelled')
+      return { job: updated }
+    } catch (error) {
+      return reply.code(400).send({ error: (error as Error).message })
+    }
+  },
+)
+
+app.delete<{ Params: { id: string } }>('/api/jobs/:id', async (request, reply) => {
+  try {
+    deleteCancelledJob(request.params.id)
+    return { ok: true }
+  } catch (error) {
+    return reply.code(400).send({ error: (error as Error).message })
+  }
+})
 
 /** Debug map: blocked cells and furniture slots for the 3D debug overlay. */
 app.get('/api/debug/map', async () => {

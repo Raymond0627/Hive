@@ -12,13 +12,13 @@ order defined by section 11 of the project brief.
 | 1 | Scaffold monorepo (client, server, shared) | done |
 | 2 | Static isometric office: floor, 3 zones, furniture, camera | done |
 | 3 | Voxel agents + click-to-select panel | done |
-| 4 | Server grid map + A* pathfinding | next |
-| 5 | WebSocket + tick loop | pending |
-| 6 | Schedules + state machine | pending |
-| 7 | Drag and drop | pending |
-| 8 | SQLite persistence | pending |
+| 4 | Server grid map + A* pathfinding | done |
+| 5 | WebSocket + tick loop | done |
+| 6 | Schedules + state machine | done |
+| 7 | Drag and drop | done |
+| 8 | SQLite persistence (tasks, lessons, looks, positions) | done |
 | 9 | Gemini task flow + lessons | done (server + panel) |
-| 10 | Customizer, error handling, spend limits | pending |
+| 10 | Customizer, error handling, spend limits | done |
 | P2.1 | Activity-tied speech & emotes | done |
 | P2.2 | Two-way conversations | done |
 | P2.3 | Identity context & direct chat | done |
@@ -27,10 +27,11 @@ order defined by section 11 of the project brief.
 | P3.3 | Physical task reactions (celebrate/frustrated gestures) | done |
 | P3.4 | Obsidian Second Brain vault (Markdown + [[wikilinks]]) | done |
 
-Phase 1 (steps 1-7, 9) and Phase 2 (P1 daily plans, P0.2 furniture JSON, P2
-speech/conversations/direct chat) are wired end to end. Tasks, lessons and chat
-history live **in memory** until step 8 (SQLite) lands. The agent walks to its
-desk for tasks, plays a done gesture, and resumes its daily plan.
+Phase 1 (steps 1-10) and Phase 2 (P1 daily plans, P0.2 furniture JSON, P2
+speech/conversations/direct chat) are wired end to end. Tasks, lessons, looks,
+direct chats, relationships and last positions persist in SQLite
+(`server/data/hive.sqlite`). The agent walks to its desk for tasks, plays a done
+gesture, and resumes its daily plan.
 
 ## Requirements
 
@@ -104,12 +105,30 @@ specific model in `.env` (for example `gemini-flash-lite-latest`) and restart.
 The server retries 429/5xx twice with backoff before surfacing the error.
 
 Safeguards already in place: one running task per agent, a `DAILY_REQUEST_LIMIT`
-budget, a 420-token output cap, a 30s timeout, and structured JSON output so a
+budget (shown live in the top bar, and the Send button locks when it is spent),
+a 420-token output cap, a 30s timeout, and structured JSON output so a
 malformed reply can fall back to plain text.
+
+## Persistence
+
+Everything that should outlive a restart is written through to
+`server/data/hive.sqlite` (`DATABASE_PATH` overrides it):
+
+| Table | Holds |
+|---|---|
+| `agents` | identity + appearance JSON (edited by the customizer) |
+| `agent_state` | last known position, activity, mood |
+| `tasks` | every Gemini task and its result |
+| `lessons` | durable lessons fed back into future prompts |
+| `relationships` | directed affinity notes between colleagues |
+| `direct_chats` | in-character chat history |
 
 ## Notes
 
 - The Gemini API key stays server-side in `.env` and is never exposed to Vite.
 - Camera: drag to pan, wheel/pinch to zoom, shift-drag to rotate.
-- `better-sqlite3` is intentionally not installed yet — it arrives with step 8
-  so the first install stays free of native build tooling.
+- Appearance: open an agent, use the colour pickers under **Appearance**, and
+  press **Apply look** — the model updates immediately and the colours survive
+  a restart.
+- Seeded runs: set `SIM_SEED=42` in `.env` for bit-for-bit reproducible
+  simulations. See `BASELINE.md` for the audit summary.

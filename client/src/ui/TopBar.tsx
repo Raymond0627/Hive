@@ -1,5 +1,4 @@
 import { useStudioStore } from '../store/useStudioStore'
-import { sendMessage } from '../net/socket'
 
 const STATUS = {
   connecting: {
@@ -11,18 +10,9 @@ const STATUS = {
   offline: { dot: 'bg-rose-500', label: 'Engine offline', tone: 'text-rose-300' },
 } as const
 
-const SPEEDS = [
-  { label: '⏸', value: 0 },
-  { label: '1x', value: 1 },
-  { label: '5x', value: 5 },
-  { label: '20x', value: 20 },
-]
-
 export function TopBar() {
   const backend = useStudioStore((state) => state.backend)
   const agentCount = useStudioStore((state) => state.agents.length)
-  const timeScale = useStudioStore((state) => state.timeScale)
-  const setTimeScale = useStudioStore((state) => state.setTimeScale)
   const debugOverlay = useStudioStore((state) => state.debugOverlay)
   const toggleDebugOverlay = useStudioStore((state) => state.toggleDebugOverlay)
   const clock = useStudioStore((state) => state.clock)
@@ -37,14 +27,9 @@ export function TopBar() {
     return `${displayH}:${String(mm).padStart(2, '0')} ${ampm}`
   }
 
-  const handleSpeed = (speed: number) => {
-    setTimeScale(speed)
-    sendMessage({ type: 'set_speed', speed })
-  }
-
   return (
     <header className="pointer-events-none absolute inset-x-0 top-0 z-30 flex flex-wrap items-start justify-between gap-3 p-4 md:p-5">
-      <div className="pointer-events-auto flex items-center gap-3 rounded-2xl border border-white/10 bg-ink-900/75 px-3.5 py-2.5 shadow-panel backdrop-blur-xl">
+      <div className="popup-surface pointer-events-auto flex items-center gap-3 rounded-2xl px-3.5 py-2.5">
         <div className="relative h-9 w-9 shrink-0">
           <div
             className="absolute inset-0 bg-accent"
@@ -77,24 +62,6 @@ export function TopBar() {
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
-        {/* Time controls (P0.1) */}
-        <div className="pointer-events-auto flex items-center gap-1 rounded-full border border-white/10 bg-ink-900/75 p-1 backdrop-blur-xl">
-          {SPEEDS.map((s) => (
-            <button
-              key={s.label}
-              type="button"
-              onClick={() => handleSpeed(s.value)}
-              className={`rounded-full px-2.5 py-1 font-mono text-[11px] font-semibold transition ${
-                timeScale === s.value
-                  ? 'bg-accent text-ink-900 shadow-sm'
-                  : 'text-ink-200 hover:bg-white/10 hover:text-white'
-              }`}
-            >
-              {s.label}
-            </button>
-          ))}
-        </div>
-
         {/* Debug overlay toggle (P0.1) */}
         <button
           type="button"
@@ -102,19 +69,14 @@ export function TopBar() {
           className={`pointer-events-auto flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11px] font-medium transition backdrop-blur-xl ${
             debugOverlay
               ? 'border-accent bg-accent/20 text-accent-soft'
-              : 'border-white/10 bg-ink-900/75 text-ink-200 hover:bg-white/10 hover:text-white'
+              : 'border-white/10 bg-ink-900/85 text-ink-200 hover:bg-white/10 hover:text-white'
           }`}
         >
           <span>🐞</span>
           <span>Debug</span>
         </button>
 
-        <div className="pointer-events-auto hidden items-center gap-2 rounded-full border border-white/10 bg-ink-900/75 px-3 py-2 backdrop-blur-xl sm:flex">
-          <span className="h-1.5 w-1.5 rounded-full bg-accent" />
-          <span className="text-[11px] font-medium text-ink-200">No AI calls while idle</span>
-        </div>
-
-        <div className="pointer-events-auto flex items-center gap-2 rounded-full border border-white/10 bg-ink-900/75 px-3 py-2 backdrop-blur-xl">
+        <div className="popup-surface pointer-events-auto flex items-center gap-2 rounded-full px-3 py-2">
           <span className={`h-1.5 w-1.5 rounded-full ${status.dot}`} />
           <span className={`text-[11px] font-medium ${status.tone}`}>{status.label}</span>
           <span className="text-ink-500">·</span>

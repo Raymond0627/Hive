@@ -67,8 +67,11 @@ export function getActiveConversation(): ActiveConversation | null {
   return activeConversation
 }
 
+import { random } from './rng'
+import { saveConversation } from '../persistence'
+
 function pick<T>(arr: T[]): T {
-  return arr[Math.floor(Math.random() * arr.length)]
+  return arr[Math.floor(random() * arr.length)]
 }
 
 /** Check if two agents are free to start a chat. */
@@ -188,6 +191,13 @@ export function endConversation(): void {
 
     // Save dialogue transcript to Obsidian Second Brain vault (P3.2)
     recordConversationToVault(metaA.name, metaB.name, chosenTopic, activeConversation.turns)
+    saveConversation(
+      activeConversation.id,
+      agentA,
+      agentB,
+      activeConversation.turns,
+      activeConversation.startedAt,
+    )
     if (simA) syncAgentToVault(metaA, simA)
     if (simB) syncAgentToVault(metaB, simB)
   }
@@ -222,7 +232,7 @@ export function updateConversations(now = Date.now()): void {
 
     if (state === 'greeting') {
       // Agent B reacts (P2.2)
-      const roll = Math.random()
+      const roll = random()
       if (roll < 0.15) {
         // Wave reaction
         simB.animation = 'wave'

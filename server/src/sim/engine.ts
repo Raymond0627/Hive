@@ -8,7 +8,7 @@
  *
  * The client only renders the state this file produces. No AI calls here.
  */
-import type { AgentActivity, AgentAnimation } from '@hive/shared'
+import type { AgentActivity, AgentAnimation, PlanBlock } from '@hive/shared'
 import { getAgent } from '../store'
 import {
   tickNeeds,
@@ -56,7 +56,11 @@ const MOODS: Record<AgentActivity, string[]> = {
   gym: ['energised', 'sweaty'],
 }
 
-const pick = <T>(items: T[]): T => items[Math.floor(Math.random() * items.length)]
+import { random, pick as pickRandom } from './rng'
+import { loadPlans, savePlan, saveTraits } from '../persistence'
+
+/** Tiny helper: pick a random item from a non-empty array. */
+const pick = <T>(items: T[]): T => pickRandom(items)
 
 export function addAgent(id: string, start: Cell): SimState {
   const home = nearestFreeCell(start, id)
@@ -83,12 +87,19 @@ export function addAgent(id: string, start: Cell): SimState {
     talkingWith: null,
     activityUntil: 0,
     mood: deriveMood(needs, 'idle', false, traits),
-    jitter: Math.floor(Math.random() * 40) - 20,
+    jitter: Math.floor(random() * 40) - 20,
     busy: false,
     waitingSince: 0,
     lastReplan: 0,
   }
+  // Chunk B: resume a saved daily plan when it belongs to today.
+  const savedPlan = loadPlans().get(id)
+  if (savedPlan && savedPlan.day === simDay && Array.isArray(savedPlan.blocks)) {
+    state.plan = savedPlan.blocks as PlanBlock[]
+  }
   agents.set(id, state)
+  saveTraits(id, traits)
+  savePlan(id, simDay, state.plan)
   return state
 }
 
@@ -151,7 +162,7 @@ function deskGoal(state: SimState, now: number): Goal | null {
  * reserves an appropriate slot, and sets duration according to the block.
  * Outside schedule hours or when slots are taken, agents fall back gracefully.
  */
-function chooseGoal(state: SimState, now: number): Goal {
+export function chooseGoal(state: SimState, now: number): Goal {
   if (state.busy) {
     const desk = deskGoal(state, now)
     if (desk) return desk
@@ -439,7 +450,7 @@ export function step(dtSeconds: number, now = Date.now()): void {
     }
 
     // Periodic Obsidian Second Brain vault sync (P3.1)
-    if (Math.random() < 0.005) {
+    if (random() < 0.005) {
       const meta = getAgent(state.id)
       if (meta) syncAgentToVault(meta, state)
     }

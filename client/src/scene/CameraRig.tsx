@@ -55,7 +55,7 @@ export function CameraRig() {
         screenSpacePanning={false}
         minPolarAngle={0.35}
         maxPolarAngle={1.25}
-        minDistance={38}
+         minDistance={38}
         maxDistance={220}
         zoomSpeed={0.8}
         panSpeed={0.9}
